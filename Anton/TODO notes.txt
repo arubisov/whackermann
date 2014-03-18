@@ -1,0 +1,33 @@
+TODO
+ 
+(1) occupancy grid itself is from 1,1 but the map should be from anywhere (
+(2) manual control of the robot (arrow keys) like a joystick, be able to switch to manual mode
+(3) PATH FOLLOWING of the RRT* generated path, use PID controller
+(4) beeping mechanism 
+	- notify if found, beep manually
+	- or median/poisson filter (timewindow of observations)
+(5) GUI development, buttons, etc.
+
+
+GUI
+unfiltered camera view
+occupancy grid view
+overlay the path-planning over the occupancy grid
+all the buttons in the world
+
+two views of occupancy grid: binary value and value/#obs
+
+
+ON THURSDAY:
+- set up room and take view pictures:
+- cones
+- at least 8x15 view of the room (big space)
+- some obstacles that block view
+- a few obstacles with known position
+
+
+(1) DONE. Realized that path planner takes in the occupancy grid, not the map.
+(2) DONE.
+(3) Work in progress...
+(4) DONE
+(5) Work in progress...

@@ -1,0 +1,13 @@
+bottom left pylon: (0,0)
+right pylon: (130,0)
+front pylon: (0,110)
+robot: (70,110)
+
+white squares: 187 apart
+
+circles:
+(40,125+110)
+(160,110)
+(174,210)
+(140,320)
+(192,366)
