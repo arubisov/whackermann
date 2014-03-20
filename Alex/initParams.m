@@ -1,7 +1,11 @@
 % Defines the constants used
 
 load('trial_3.mat')
+% load('..\Anton\Save\20140318_1.mat')
 % [rgb, depth] = myGrabKinect();
+for i = 1:3, rgb(i,:,:) = fliplr(squeeze(rgb(i,:,:))); end
+depth = fliplr(depth);
+
 if ~(size(rgb,1) == size(depth,1) && size(rgb,2) == size(depth,2))
     error('depth and RGB do not match');
 end
@@ -11,7 +15,7 @@ PARAMS.VERT_RGB_FOV = 43.5 / 360 * 2 * pi; % 43.5 degrees
 PARAMS.HORIZ_RGB_FOV = 57.5 / 360 * 2 * pi; % 57.5 degrees
 
 % Estimated Kinect sensor angle
-PARAMS.SENSOR_ANGLE_DEG = 20; % 20 degrees downward
+PARAMS.SENSOR_ANGLE_DEG = 10; % 10 degrees downward
 
 % Too high? -> Less accurate result!
 % Too low? -> Slow computation.
