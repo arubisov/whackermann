@@ -25,7 +25,7 @@ PARAMS.GROUND_PLANE_POINT_THRESHOLD = 500;
 
 % Occupancy grid parameters
 PARAMS.XY_RESOLUTION = 5/100; % 5 cm
-PARAMS.ROBOT_HEIGHT = 40/100; % 40 cm
+PARAMS.ROBOT_HEIGHT = 20/100; % 20 cm
 PARAMS.GROUND_HEIGHT = 5/100; % 5 cm
 
 % Robot Physical Parameters

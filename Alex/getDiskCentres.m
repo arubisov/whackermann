@@ -36,6 +36,9 @@ for i = 1:length(md),
        
 end
 
-[Dx,Dy,Dz] = getWorldPointMap(Disk(:,1),Disk(:,2),Disk(:,3),n,Oax,Xax,Yax);
+% [Dx,Dy,Dz] = getWorldPointMap(Disk(:,1),Disk(:,2),Disk(:,3),n,Oax,Xax,Yax);
+Dx = Disk(:,1);
+Dy = Disk(:,2);
+Dz = Disk(:,3);
 
 if any(abs(Dz) > 1E-5), error('oops'); end

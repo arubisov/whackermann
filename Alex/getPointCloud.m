@@ -13,54 +13,51 @@ HORIZ_RGB_FOV = PARAMS.HORIZ_RGB_FOV;
 SENSOR_ANGLE_DEG = PARAMS.SENSOR_ANGLE_DEG;
 
 sens_o = [0; sind(SENSOR_ANGLE_DEG); cosd(SENSOR_ANGLE_DEG)]; 
+% sens_o = [sind(SENSOR_ANGLE_DEG); 0; cosd(SENSOR_ANGLE_DEG)]; 
 tar_o = [0; 0; 1];
-R = privateRotateFromTo(tar_o,sens_o);
+R = privateRotateFromTo(sens_o,tar_o);
 
 [m,n] = size(depth);
 X = zeros(nnz(depth),1);
 Y = X;
 Z = X;
 ImInd = X;
-distance = zeros(m,n);
+
 %% START
+
+% TODO: take these out of the loop
+% horiz_rad = (1/2 - (n-1:n-1)/(n-1)) * HORIZ_RGB_FOV;
+% vert_rad = pi/2 + (-1/2 + (m-1:m-1)/(m-1)) * VERT_RGB_FOV;
+
+focalLengthZ = m/2/tan(VERT_RGB_FOV/2);
+focalLengthX = n/2/tan(HORIZ_RGB_FOV/2);
 
 k = 1;
 for i = 1:m,
-    vert_rad = pi/2 + (-1/2 + (m-i-1)/(m-1)) * VERT_RGB_FOV;
-    
+%     vert_rad = pi/2 + (-1/2 + (m-i-1)/(m-1)) * VERT_RGB_FOV;
+    vert_rad = asin((m/2-i)/focalLengthZ);
     for j = 1:n,
         if depth(i,j) ~= 0,
             
-            horiz_rad = (1/2 - (n-j-1)/(n-1)) * HORIZ_RGB_FOV;
+%             horiz_rad = (1/2 - (n-j-1)/(n-1)) * HORIZ_RGB_FOV;
+            horiz_rad = asin((n/2 - j)/focalLengthX);
             
-            % Assumes points are laid out rectangularly
-%             minDistance = -10
-%             scaleFactor = 0.0021
-%             z = depth[i][j]
-%             x = (i - 480 / 2) * (z + minDistance) * scaleFactor
-%             y = (640 / 2 - j) * (z + minDistance) * scaleFactor
-%             my3DPoint = single( R * ...
-%                                 [ i - n;
-%                                   depth(i,j);
-%                                   1];
-                                
+            my3DPoint = single(depth(i,j)) * R *...
+                            [   sin(horiz_rad)
+                                1
+                                sin(vert_rad) ];
             
             % Uses ray tracing (spherical coordinates w/ focal point
-            my3DPoint = single(depth(i,j)) * R *...
-                            [   sin(vert_rad)*sin(horiz_rad);  ...
-                                cos(horiz_rad)*sin(vert_rad);  ...
-                               -cos(vert_rad)                 ];
+%             my3DPoint = single(depth(i,j)) * R *...
+%                             [   sin(vert_rad)*sin(horiz_rad);  ...
+%                                 cos(horiz_rad)*sin(vert_rad);  ...
+%                                -cos(vert_rad)                 ];
                              
             X(k) = my3DPoint(1);
             Y(k) = my3DPoint(2);
             Z(k) = my3DPoint(3);
             ImInd(k) = sub2ind([m n],i,j);
-            distance(i,j) = sqrt(sum(my3DPoint.^2));
             k = k + 1;
         end
     end
 end
-
-% Testing purposes
-
-imagesc(distance)
