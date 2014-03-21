@@ -1,6 +1,6 @@
 clear; close all; clc;
 
-initParams;
+init;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
 [n,v] = getGroundPlane(X,Y,Z,PARAMS);
@@ -15,7 +15,7 @@ pts = repmat(v',4,1) + 3000 * ...
        cross(n, [-1  0  0] ) ;
        cross(n, [ 0  1  0] ) ;
        cross(n, [ 0 -1  0] )];
-fill3(pts(:,1),pts(:,2),pts(:,3),'red');
+fill3(pts(:,1),pts(:,2),pts(:,3),'yellow');
 xlabel('X')
 ylabel('Y')
 zlabel('Z')

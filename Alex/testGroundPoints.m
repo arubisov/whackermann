@@ -1,6 +1,6 @@
 clear; close all; clc;
 
-initParams;
+init;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
 [n,v] = getGroundPlane(X,Y,Z,PARAMS);

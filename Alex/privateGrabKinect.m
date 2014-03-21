@@ -1,4 +1,4 @@
-function [rgb, depth] = myGrabKinect()
+function [rgb, depth] = privateGrabKinect()
 
 addpath('./Mex');
 context = mxNiCreateContext('Config/SamplesConfig.xml');

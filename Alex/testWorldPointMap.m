@@ -1,6 +1,6 @@
 clear; close all; clc;
 
-initParams;
+init;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
 
@@ -14,7 +14,7 @@ zlabel('Z')
 axis equal
 
 [n,v] = getGroundPlane(X,Y,Z,PARAMS);
-[Oax,Xax,Yax] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb);
+[Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb);
 [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax);
  
 figure(h)

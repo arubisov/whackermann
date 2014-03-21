@@ -1,6 +1,6 @@
 % Returns the 3D Points representing the axes which define the world frame.
 
-function [Oax,Xax,Yax] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb)
+function [Oax,Xax,Yax,Oax3,Xax3,Yax3] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb)
 
 % Find the tip of the cones manually (Current) or automatically (TODO). Tip
 % of cones returned with respect to 2D images.
@@ -28,3 +28,4 @@ end
 Oax = (Oax3 - v) - ((Oax3 - v)'*n)/(n'*n)*n + v;
 Xax = (Xax3 - v) - ((Xax3 - v)'*n)/(n'*n)*n + v;
 Yax = (Yax3 - v) - ((Yax3 - v)'*n)/(n'*n)*n + v;
+
