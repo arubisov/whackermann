@@ -37,10 +37,10 @@ function setup(block)
     block.InputPort(1).DirectFeedthrough = true;
     
     % Override the input port properties.
-    block.InputPort(2).DatatypeID  = 0;  % double
-    block.InputPort(2).Dimensions = 1;
-    block.InputPort(2).Complexity  = 'Real';
-    block.InputPort(2).DirectFeedthrough = true;
+    %block.InputPort(2).DatatypeID  = 0;  % double
+    %block.InputPort(2).Dimensions = 1;
+    %block.InputPort(2).Complexity  = 'Real';
+    %block.InputPort(2).DirectFeedthrough = true;
     
     % Override the input port properties.
     block.InputPort(3).DatatypeID  = 0;  % double
@@ -303,6 +303,7 @@ function DoPostPropSetup(block)
     block.Dwork(2).Name            = 'steering_mode';
     block.Dwork(2).Dimensions      = 1;
     block.Dwork(2).DatatypeID      = 8;      % boolean
+    block.Dwork(2).Complexity      = 'Real'; % real
     block.Dwork(2).UsedAsDiscState = false;
     
     block.Dwork(3).Name            = 'dist_to_next';
@@ -318,9 +319,9 @@ function InitializeConditions(block)
     block.Dwork(2).Data = true; % start in steering mode
     block.Dwork(3).Data = Inf;  % distance to next node at infinity
     
-    block.ContStates(1).Data = 0; % cte at 0
-    block.ContStates(2).Data = 0; % cte derivative at 0
-    block.ContStates(3).Data = 0; % cte integrator at 0
+    block.ContStates.Data(1) = 0; % cte at 0
+    block.ContStates.Data(2) = 0; % cte derivative at 0
+    block.ContStates.Data(3) = 0; % cte integrator at 0
 %endfunction
 
 function outSimState = GetSimState(block)
@@ -349,17 +350,17 @@ function Derivatives(block)
         from_node = path(:,block.Dwork(1).Data);
         to_node = path(:,block.Dwork(1).Data+1);     
         
-        prev_cte = block.ContStates(1).Data;
+        prev_cte = block.ContStates.Data(1);
         cte = crosstrackerror(pose, from_node, to_node);
         
-        block.ContStates(1).Data = cte;
-        block.Derivatives(1).Data = 0;
-        block.Derivatives(2).Data = cte - prev_cte;
-        block.Derivatives(3).Data = cte;
+        block.ContStates.Data(1) = cte;
+        block.Derivatives.Data(1) = 0;
+        block.Derivatives.Data(2) = cte - prev_cte;
+        block.Derivatives.Data(3) = cte;
     else
-        block.Derivatives(1).Data = 0;
-        block.Derivatives(2).Data = 0;
-        block.Derivatives(3).Data = 0;
+        block.Derivatives.Data(1) = 0;
+        block.Derivatives.Data(2) = 0;
+        block.Derivatives.Data(3) = 0;
     end
 %endfunction
 
@@ -375,17 +376,18 @@ function Outputs(block)
     % are we executing?
     if ~exec_path
         speed = 0;
-        steering = 0;
+        steer_speed = 0;
     % if we're executing, are we in steering mode?
     elseif (steering)
         speed = 0;
         to_node = path(:,block.Dwork(1).Data+1);    
         
-        if abs(to_node(5) - pose(4)) > 0.02   % more than a degree off
+        if abs(to_node(5) - pose(4)) > 0.02 % more than a degree off desired steering angle
             turn_dir = 1 - 2*((to_node(5) - pose(4)) < 0); % +ve means turn left, -ve turn right.
-            steering = 5 * turn_dir;
-        else
-            steering = 0;
+            steer_speed = 5 * turn_dir;
+        else                                % otherwise stop steering
+            steer_speed = 0;
+            block.Dwork(2).Data = false;
         end
         
     % otherwise, let's drive outta here.    
@@ -410,7 +412,7 @@ function Outputs(block)
             % set steering mode true
             block.Dwork(2).Data = true;
             speed = 0;
-            steering = 0;
+            steer_speed = 0;
             % if we've reached the end of the path, stop execution and reset.
             if block.Dwork(1).Data == size(path,2)
                 set_param('driver/Path Follower/Exec Path','Value','0');
@@ -419,19 +421,19 @@ function Outputs(block)
             
         % otherwise life's all good and let's just drive toward the goal.
         else
-            steering = - block.DialogPrm(1).Data * block.ContStates(1).Data ...
-                     - block.DialogPrm(2).Data * block.ContStates(2).Data ...
-                     - block.DialogPrm(3).Data * block.ContStates(3).Data;
+            steer_speed = - block.DialogPrm(1).Data * block.ContStates.Data(1) ...
+                     - block.DialogPrm(2).Data * block.ContStates.Data(2) ...
+                     - block.DialogPrm(3).Data * block.ContStates.Data(3);
 
             drive_speed = 20;
             direction = 1 - 2*(pose(4) < 0);
 
             speed = direction * drive_speed;
-            fprintf('PATH FOLLOWER: vel=%.2f, steer=%.2f\n', speed,steering);
+            fprintf('PATH FOLLOWER: vel=%.2f, steer=%.2f\n', speed, steer_speed);
         end
     end
     
-    block.OutputPort(1).Data = steering;
+    block.OutputPort(1).Data = steer_speed;
     block.OutputPort(2).Data = speed;
 %endfunction
 

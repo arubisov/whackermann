@@ -57,6 +57,22 @@ classdef RRT3D < handle
             rrt.index = zeros(1, max_nodes);
             rrt.list = 1:max_nodes;
             rrt.num_rewired = 0;
+            %%% maintenance
+            rrt.clean_up_occ_grid();
+        end
+        
+        % Perform occupancy grid clean-up.
+        % (1) Remove robot from the occ grid in case it's still there.
+        function clean_up_occ_grid(rrt)
+            start_pose = rrt.tree(1:3,1);
+            center = start_pose(1:2)' + [cos(start_pose(3))/(0.5*rrt.L) sin(start_pose(3))/(0.5*rrt.L)];
+            % ranges: each row: [xmin xmax ymin ymax]
+            ranges = [max(round(center(1)-rrt.L/2), rrt.XY_BOUNDARY(1)), ...
+                      min(round(center(1)+rrt.L/2), rrt.XY_BOUNDARY(2)), ...
+                      max(round(center(2)-rrt.L/2), rrt.XY_BOUNDARY(3)), ...
+                      min(round(center(2)+rrt.L/2), rrt.XY_BOUNDARY(4))];
+            
+            rrt.occ_grid(ranges(3):ranges(4),ranges(1):ranges(2)) = zeros(ranges(4)-ranges(3)+1, ranges(2)-ranges(1)+1);
         end
         
         % ==============================================================
