@@ -11,7 +11,7 @@ initParams;
 figure
 subplot(1,3,1)
 k = 137;
-scatter3(decimate(X,k),decimate(Y,k),decimate(Z,k),'.')
+scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
 xlabel('X')
 ylabel('Y')
 zlabel('Z')
@@ -27,5 +27,4 @@ xlabel('X')
 ylabel('Y')
 
 subplot(1,3,3)
-% imshow(rgb)
-imshow(cat(3,fliplr(rgb(:,:,1)),fliplr(rgb(:,:,2)),fliplr(rgb(:,:,3))))
+imshow(rgb)
