@@ -6,7 +6,7 @@ initParams;
 [n,v] = getGroundPlane(X,Y,Z,PARAMS);
 
 k = 103;
-scatter3(decimate(X,k),decimate(Y,k),decimate(Z,k),'.')
+scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
 hold on
 
 % Find 4 points on the plane.

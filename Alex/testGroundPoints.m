@@ -16,8 +16,8 @@ Z = Z(~GInd);
 
 figure(1)
 k = 137;
-scatter3(decimate(X,k),decimate(Y,k),decimate(Z,k),'.')
-% scatter(decimate(Y,k),decimate(Z,k),'.')
+scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
+% scatter(downsample(Y,k),downsample(Z,k),'.')
 hold on
 axis equal
 % Find 4 points on the plane.

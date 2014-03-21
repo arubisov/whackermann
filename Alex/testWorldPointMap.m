@@ -7,7 +7,7 @@ initParams;
 k = 137;
 h = figure;
 subplot(1,2,1)
-scatter3(decimate(X,k),decimate(Y,k),decimate(Z,k),'.')
+scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
 xlabel('X')
 ylabel('Y')
 zlabel('Z')
@@ -19,7 +19,7 @@ axis equal
  
 figure(h)
 subplot(1,2,2)
-scatter3(decimate(X,k),decimate(Y,k),decimate(Z,k),'.')
+scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
 xlabel('X')
 ylabel('Y')
 zlabel('Z')

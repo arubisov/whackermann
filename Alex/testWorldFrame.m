@@ -7,7 +7,7 @@ initParams;
 [Oax,Xax,Yax] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb);
 
 k = 137;
-scatter3(decimate(X,k),decimate(Y,k),decimate(Z,k),'.')
+scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
 xlabel('X')
 ylabel('Y')
 zlabel('Z')

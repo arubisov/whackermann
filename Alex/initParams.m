@@ -3,7 +3,7 @@
 load('trial_3.mat')
 % load('..\Anton\Save\20140318_1.mat')
 % [rgb, depth] = myGrabKinect();
-for i = 1:3, rgb(i,:,:) = fliplr(squeeze(rgb(i,:,:))); end
+rgb = flipdim(rgb,2);
 depth = fliplr(depth);
 
 if ~(size(rgb,1) == size(depth,1) && size(rgb,2) == size(depth,2))
@@ -15,7 +15,7 @@ PARAMS.VERT_RGB_FOV = 43.5 / 360 * 2 * pi; % 43.5 degrees
 PARAMS.HORIZ_RGB_FOV = 57.5 / 360 * 2 * pi; % 57.5 degrees
 
 % Estimated Kinect sensor angle
-PARAMS.SENSOR_ANGLE_DEG = 10; % 10 degrees downward
+PARAMS.SENSOR_ANGLE_DEG = 15; % 15 degrees downward
 
 % Too high? -> Less accurate result!
 % Too low? -> Slow computation.
@@ -25,7 +25,7 @@ PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 103;
 % Too high? -> Obstacles can be considered ground.
 % Too low? -> Fit more vulnerable to noise.
 % Should be an int > 2. Dependent on GROUND_PLANE_DECIMATION_FACTOR.
-PARAMS.GROUND_PLANE_POINT_THRESHOLD = 500;
+PARAMS.GROUND_PLANE_POINT_THRESHOLD = 1000;
 
 % Occupancy grid parameters
 PARAMS.XY_RESOLUTION = 5/100; % 5 cm
