@@ -1,8 +1,11 @@
 % Defines the constants used
 
-load('trial_3.mat')
+% load('trial_3.mat')
 % load('..\Anton\Save\20140318_1.mat')
-% [rgb, depth] = myGrabKinect();
+context = privateKinectInit();
+[rgb, depth] = privateKinectGrab(context);
+privateKinectStop(context);
+
 rgb = flipdim(rgb,2);
 depth = fliplr(depth);
 
