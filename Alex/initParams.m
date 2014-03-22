@@ -1,19 +1,7 @@
 % Defines the constants used
 
-% load('trial_3.mat')
-% load('..\Anton\Save\20140318_1.mat')
-context = privateKinectInit();
-[rgb, depth] = privateKinectGrab(context);
-privateKinectStop(context);
+if exist('3Dax.mat','file'), delete('3Dax.mat'); end
 
-% rgb = flipdim(rgb,2);
-% depth = fliplr(depth);
-
-if ~(size(rgb,1) == size(depth,1) && size(rgb,2) == size(depth,2))
-    error('depth and RGB do not match');
-end
-
-% Vertical and horizontal field of views
 PARAMS.VERT_RGB_FOV = 43.5 / 360 * 2 * pi; % 43.5 degrees
 PARAMS.HORIZ_RGB_FOV = 57.5 / 360 * 2 * pi; % 57.5 degrees
 

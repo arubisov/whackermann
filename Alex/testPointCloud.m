@@ -1,6 +1,7 @@
 clear; close all; clc;
 
-init;
+initFrame;
+initParams;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
 

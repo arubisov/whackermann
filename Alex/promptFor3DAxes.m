@@ -22,12 +22,12 @@ for i = 1:3,
         otherwise,
             error('switch error')
     end
-    
+
     [x,y] = ginput(1);
     x = round(x);
     y = round(y);
     s = sub2ind(size(depth),y,x);
-    
+
     switch i,
         case 1,
             Od = s;
@@ -38,7 +38,7 @@ for i = 1:3,
         otherwise,
             error('switch error')
     end
-    
+
 end
 
 close(h);
