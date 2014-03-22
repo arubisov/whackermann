@@ -18,10 +18,13 @@ function path = RRT_star(map, start, goal, params)
     
     problem = RRT3D(RAND_SEED, MAX_NODES, map, params);
 	
+    h = waitbar(0, 'RRT planning...');
+
 	%%% Starting a timer
 	tic;
 	for ind = 1:MAX_ITER
-		
+		waitbar(ind / MAX_ITER);
+        
 		% Generate a random node
 		new_node = problem.sample();
 
@@ -57,9 +60,10 @@ function path = RRT_star(map, start, goal, params)
             break;
         end
 	end
+    
+    close(h);
  
     path = problem.return_path();
-    disp(path);
     %problem.plot();
     
 end

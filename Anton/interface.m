@@ -71,6 +71,7 @@ handles.default_cmap = colormap;
 handles.depth = depth;
 handles.rgb = rgb;
 handles.PARAMS = PARAMS;
+handles.path = [];
 guidata(hObject,handles);
 
 loadOccGrids(hObject, eventdata, handles);
@@ -134,6 +135,9 @@ if (handles.reset_robot_xy)
     set(handles.txt_robot_pose,'String',sprintf('[%.2f,%.2f,%.2f,%.2f]',Dx, Dy, pose(3), pose(4)));
     handles.reset_robot_xy = false;
     % TODO: pass new coordinates back to Simulink model
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%d,%d,%d]',Dx, Dy, pose(3)));
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','true');
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false');
     guidata(hObject,handles);
 else
     set(handles.txt_goal,'String',sprintf('%.2f,%.2f',Dx, Dy));
@@ -166,7 +170,7 @@ set(findobj('Tag','txt_goal'),'string',sprintf('%d,%d',x1, y1));
 guidata(hObject,handles);
 
 %fprintf('Click detected at x: %d, y: %d\n', x1, y1)
-updateOccBinary(hObject, eventdata, handles);
+%updateOccBinary(hObject, eventdata, handles);
 
 % --- Outputs from this function are returned to the command line.
 function varargout = interface_OutputFcn(hObject, eventdata, handles) 
@@ -179,35 +183,33 @@ function varargout = interface_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 % --- Executes on button press in push_astar.
-function push_astar_Callback(hObject, eventdata, handles)
-% hObject    handle to push_astar (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% function push_astar_Callback(hObject, eventdata, handles)
+% % hObject    handle to push_astar (see GCBO)
+% % eventdata  reserved - to be defined in a future version of MATLAB
+% % handles    structure with handles and user data (see GUIDATA)
+% 
+% txt = get(handles.txt_dest, 'String');
+% txt2 = regexp(txt, ',', 'split');
+% xf = cellfun(@str2num,txt2);
+% 
+% x_f = xf(1);
+% y_f = xf(2);
+% 
+% handles.world(y_f, x_f) = 3;
+% 
+% %fprintf('Click detected at x: %d, y: %d\n', x1, y1)
+% updateOccBinary(hObject, eventdata, handles);
+% %guidata(hObject,handles);  % commit target position to guidata
+% 
+% path = Astar(handles.world, [0 0], [y_f x_f]);
+% 
+% % Display the A* path.
+% len = size(path,1);
+% for i=len:-1:2
+%     handles.world(path(i,1), path(i,2)) = 2;
+% end
+% updateOccBinary(hObject, eventdata, handles);
 
-txt = get(handles.txt_dest, 'String');
-txt2 = regexp(txt, ',', 'split');
-xf = cellfun(@str2num,txt2);
-
-x_f = xf(1);
-y_f = xf(2);
-
-handles.world(y_f, x_f) = 3;
-
-%fprintf('Click detected at x: %d, y: %d\n', x1, y1)
-updateOccBinary(hObject, eventdata, handles);
-%guidata(hObject,handles);  % commit target position to guidata
-
-path = Astar(handles.world, [0 0], [y_f x_f]);
-
-% Display the A* path.
-len = size(path,1);
-for i=len:-1:2
-    handles.world(path(i,1), path(i,2)) = 2;
-end
-updateOccBinary(hObject, eventdata, handles);
-
-
-%set_param('modelName','SimulationCommand','stop');
 
 function updateOccBinary(hObject, eventdata, handles)
 % Helper function for ploting the selected plot type
@@ -244,12 +246,12 @@ handles.gr_y = gr_y;
 guidata(hObject,handles);
 
 subplot(handles.axes_occ_binary);
-%imagesc(gr_x, gr_y, Occ);
+% imagesc(gr_x, gr_y, Occ);
 imagesc(handles.occ_binary > 0);
 set(gca,'YDir','normal')
-%axis image
-xlabel('X')
-ylabel('Y')
+% axis image
+% xlabel('X')
+% ylabel('Y')
 updateOccBinary(hObject, eventdata, handles)
 
 Grid = single(Occ)./single(Known);
@@ -257,9 +259,9 @@ Grid(isnan(Grid)) = -1;
 subplot(handles.axes_occ_conf);
 imagesc(gr_x, gr_y, Grid);
 set(gca,'YDir','normal')
-%axis image
-xlabel('X')
-ylabel('Y')
+% axis image
+% xlabel('X')
+% ylabel('Y')
 
 function plotPathOnOcc(handles, path)
 
@@ -345,6 +347,7 @@ start = cellfun(@str2num,start);
 path = RRT_star(handles.occ_binary, [start_x start_y start(3)], [goal_x goal_y], handles.PARAMS);
 
 handles.curr_path = path;
+set(handles.push_exec_path, 'Enable', 'on');
 guidata(hObject, handles);
 
 plotPathOnOcc(handles, path);
@@ -358,12 +361,15 @@ function push_clear_path_Callback(hObject, eventdata, handles)
 % hObject    handle to push_clear_path (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+set(handles.push_exec_path, 'Enable', 'off');
+handles.curr_path = [];
+guidata(hObject, handles);
+
 subplot(handles.axes_occ_binary);
 imagesc(handles.occ_binary > 0);
 set(gca,'YDir','normal')
-%axis image
-xlabel('X')
-ylabel('Y')
+
 updateOccBinary(hObject, eventdata, handles)
 
 
@@ -486,6 +492,12 @@ function push_exec_path_Callback(hObject, eventdata, handles)
 % hObject    handle to push_exec_path (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+if (~handles.path) 
+	error('No path found.');
+else
+	set_param('driver/Path Follower/path','Value',handles.path);
+    set_param('driver/Path Follower/Exec Path','Value','1');
+end
 
 
 

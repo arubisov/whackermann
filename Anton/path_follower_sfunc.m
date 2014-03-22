@@ -416,6 +416,7 @@ function Outputs(block)
             % if we've reached the end of the path, stop execution and reset.
             if block.Dwork(1).Data == size(path,2)
                 set_param('driver/Path Follower/Exec Path','Value','0');
+                set_param('driver/Path Follower/path','Value','[]');
                 InitializeConditions(block)
             end
             
