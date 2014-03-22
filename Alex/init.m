@@ -6,8 +6,8 @@ context = privateKinectInit();
 [rgb, depth] = privateKinectGrab(context);
 privateKinectStop(context);
 
-rgb = flipdim(rgb,2);
-depth = fliplr(depth);
+% rgb = flipdim(rgb,2);
+% depth = fliplr(depth);
 
 if ~(size(rgb,1) == size(depth,1) && size(rgb,2) == size(depth,2))
     error('depth and RGB do not match');

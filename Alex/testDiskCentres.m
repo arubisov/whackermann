@@ -8,7 +8,7 @@ init;
 % [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax);
 
 % [Dx,Dy] = getDiskCentres(n,v,rgb,depth,Oax,Xax,Yax,PARAMS)
-privateTestMeasure(n,v,rgb,depth,Oax,Xax,Yax,PARAMS)
+privateTestMeasure(n,v,rgb,depth,Oax,Xax,Yax,PARAMS);
 
 % [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax);
 % [Occ,Known,gr_x,gr_y] = getOccupancyGrid(X,Y,Z,PARAMS);
