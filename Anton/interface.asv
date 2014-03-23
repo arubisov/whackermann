@@ -145,25 +145,34 @@ else
     set(handles.txt_goal,'String',sprintf('%.2f,%.2f',Dx, Dy));
 end
 
+function [x_ind, y_ind] = get_occ_index_from_xy(pose, handles)
+% pass in [x,y] coordinates in camera view frame, return indices in
+% occupancy grid.
+[~, x_ind] = min(abs(handles.gr_x-pose(1)));
+[~, y_ind] = min(abs(handles.gr_y-pose(2)));
 
-% % --- Callback for clicking on axes
-% function axes_occ_binary_ButtonDownFcn(hObject, eventdata, handles)
-% % varargout  cell array for returning output args (see VARARGOUT);
-% % hObject    handle to figure
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% 
-% % Get default command line output from handles structure
-% point = get(handles.axes_occ_binary,'CurrentPoint');    % button down detected
-% point = round(point(1,1:2));                            % extract x and y
-% 
-% x1 = max(1, point(1));
-% y1 = max(1, point(2));
-% 
-% %handles.world(y1:y1, x1:x1) = 1;
-% set(findobj('Tag','txt_goal'),'string',sprintf('%d,%d',x1, y1));
-% guidata(hObject,handles);
 
+
+% --- Callback for clicking on axes
+function axes_occ_binary_ButtonDownFcn(hObject, eventdata, handles)
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+point = get(handles.axes_occ_binary,'CurrentPoint');    % button down detected
+point = round(point(1,1:2));                            % extract x and y
+
+x1 = max(1, point(1));
+y1 = max(1, point(2));
+
+%handles.world(y1:y1, x1:x1) = 1;
+set(findobj('Tag','txt_goal'),'string',sprintf('%d,%d',x1, y1));
+guidata(hObject,handles);
+
+%fprintf('Click detected at x: %d, y: %d\n', x1, y1)
+%updateOccBinary(hObject, eventdata, handles);
 
 % --- Outputs from this function are returned to the command line.
 function varargout = interface_OutputFcn(hObject, eventdata, handles) 
@@ -242,9 +251,9 @@ guidata(hObject,handles);
 
 subplot(handles.axes_occ_binary);
 % imagesc(gr_x, gr_y, Occ);
-imagesc(gr_x, gr_y, (Occ > 25));
+imagesc(gr_x, gr_y, Occ > 25);
 set(gca,'YDir','normal')
-axis image
+% axis image
 % xlabel('X')
 % ylabel('Y')
 updateOccBinary(hObject, eventdata, handles)
@@ -254,7 +263,7 @@ Grid(isnan(Grid)) = -1;
 subplot(handles.axes_occ_conf);
 imagesc(gr_x, gr_y, Grid);
 set(gca,'YDir','normal')
-axis image
+% axis image
 % xlabel('X')
 % ylabel('Y')
 
@@ -289,18 +298,18 @@ for ind = size(path,2):-1:2
     plotOccPathArc(a,b,CX,CY,abs(radius),color)
 end
 
-plot([path(1,:) + cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L + sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(1,:) + cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L - sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(1,:) - cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L - sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(1,:) - cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L + sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(1,:) + cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L + sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W], ...
-    [path(2,:) + sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L - cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(2,:) + sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L + cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(2,:) - sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L + cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(2,:) - sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L - cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
-    path(2,:) + sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L - cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W], 'm', 'LineWidth', 2);
+plot([path(1,backtrace_path) + cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.L + sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(1,backtrace_path) + cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.L - sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(1,backtrace_path) - cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.L - sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(1,backtrace_path) - cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.L + sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(1,backtrace_path) + cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.L + sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.W], ...
+    [rrt.tree(2,backtrace_path) + sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.L - cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(2, backtrace_path) + sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.L + cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(2, backtrace_path) - sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.L + cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(2, backtrace_path) - sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.L - cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
+    rrt.tree(2,backtrace_path) + sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.L - cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.W], 'm', 'LineWidth', 2);
 
-plotOccPathArc(0,2*pi,path(1,1),path(2,1),handles.PARAMS.RRT_DELTA_GOAL_POINT,'r-');
+plotOccPathArc(0,2*pi,path(1,1),path(2,1),2,'r-');
 hold off
 
 
@@ -337,17 +346,19 @@ push_clear_path_Callback(hObject, eventdata, handles);
 goal = get(handles.txt_goal, 'String');
 goal = regexp(goal, ',', 'split');
 goal = cellfun(@str2num,goal);
+[goal_x, goal_y] = get_occ_index_from_xy(goal, handles);
 
 % GET INITIAL POSITION
 start = get(handles.txt_robot_pose,'String');
 start = start(2:end-1);
 start = regexp(start, ',', 'split');
 start = cellfun(@str2num,start);
+[start_x, start_y] = get_occ_index_from_xy(start, handles);
 
 %fprintf('Click detected at x: %d, y: %d\n', x1, y1)
 %guidata(hObject,handles);  % commit target position to guidata
 
-path = RRT_star((handles.occ_binary > 25), [start(1) start(2) start(3)], [goal(1) goal(2)], handles.PARAMS);
+path = RRT_star(handles.occ_binary, [start_x start_y start(3)], [goal_x goal_y], handles.PARAMS);
 
 handles.curr_path = path;
 set(handles.push_exec_path, 'Enable', 'on');
@@ -370,9 +381,8 @@ handles.curr_path = [];
 guidata(hObject, handles);
 
 subplot(handles.axes_occ_binary);
-imagesc(handles.gr_x, handles.gr_y, (handles.occ_binary > 25));
+imagesc(handles.occ_binary > 0);
 set(gca,'YDir','normal')
-axis image
 
 updateOccBinary(hObject, eventdata, handles)
 

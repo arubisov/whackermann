@@ -1,6 +1,9 @@
 classdef RRT3D < handle
     properties (SetAccess = private)
         occ_grid            % Occupancy grid of the world
+        XY_RESOLUTION       % Resolution of the occupancy grid
+        gr_x                % Occupancy grid for x-axis
+        gr_y                % Occupancy grid for y-axis
         R                   % Radius of a wheel
         W                   % Width of the robot
         L                   % Length of the robot
@@ -29,33 +32,36 @@ classdef RRT3D < handle
     end
     methods
         % class constructor
-        function rrt = RRT3D(rand_seed, max_nodes, occ_grid, params)
-            rng(rand_seed);
+        function rrt = RRT3D(occ_grid, params)            
+            rng(params.RRT_RAND_SEED);
             rrt.occ_grid = occ_grid;
-            rrt.R = params.ROBOT_R / params.XY_RESOLUTION;
-            rrt.W = params.ROBOT_W / params.XY_RESOLUTION;
-            rrt.L = params.ROBOT_L / params.XY_RESOLUTION;
-            rrt.DRIVE_SPEED = params.DRIVE_SPEED;
+            rrt.XY_RESOLUTION = params.XY_RESOLUTION;
+            rrt.gr_x = params.gr_x;
+            rrt.gr_y = params.gr_y;
+            rrt.R = params.ROBOT_R;
+            rrt.W = params.ROBOT_W;
+            rrt.L = params.ROBOT_L;
+            rrt.DRIVE_SPEED = params.RRT_DRIVE_SPEED;
             rrt.MAX_STEER = params.MAX_STEER;
-            rrt.tree = zeros(6, max_nodes);
-            rrt.parent = zeros(1, max_nodes);
-            rrt.children = zeros(1, max_nodes);
-            rrt.free_nodes = zeros(1, max_nodes);
+            rrt.tree = zeros(6, params.RRT_MAX_NODES);
+            rrt.parent = zeros(1, params.RRT_MAX_NODES);
+            rrt.children = zeros(1, params.RRT_MAX_NODES);
+            rrt.free_nodes = zeros(1, params.RRT_MAX_NODES);
             rrt.free_nodes_ind = 1;
-            rrt.cost = zeros(1, max_nodes);
-            rrt.cumcost = zeros(1,max_nodes);
-            rrt.XY_BOUNDARY = [1; size(occ_grid,2); 1; size(occ_grid,1)];
+            rrt.cost = zeros(1, params.RRT_MAX_NODES);
+            rrt.cumcost = zeros(1, params.RRT_MAX_NODES);
+            rrt.XY_BOUNDARY = [rrt.gr_x(1) ; rrt.gr_x(end); rrt.gr_y(1); rrt.gr_y(end)];
             rrt.tree(:, 1) = [params.start_pose, zeros(1,3)]'; % Start position
             rrt.goal_point = params.goal_point;
-            rrt.delta_goal_point = params.delta_goal_point;
-            rrt.delta_near = params.delta_near;
+            rrt.delta_goal_point = params.RRT_DELTA_GOAL_POINT;
+            rrt.delta_near = params.RRT_DELTA_NEAR;
             rrt.nodes_added = uint32(1);
             rrt.best_path_node = -1;
             rrt.goal_reached = false;
             %%% temp var-s initialization
-            rrt.compare_table = zeros(1, max_nodes);
-            rrt.index = zeros(1, max_nodes);
-            rrt.list = 1:max_nodes;
+            rrt.compare_table = zeros(1, params.RRT_MAX_NODES);
+            rrt.index = zeros(1, params.RRT_MAX_NODES);
+            rrt.list = 1:params.RRT_MAX_NODES;
             rrt.num_rewired = 0;
             %%% maintenance
             rrt.clean_up_occ_grid();
@@ -63,16 +69,38 @@ classdef RRT3D < handle
         
         % Perform occupancy grid clean-up.
         % (1) Remove robot from the occ grid in case it's still there.
-        function clean_up_occ_grid(rrt)
-            start_pose = rrt.tree(1:3,1);
-            center = start_pose(1:2)' + [cos(start_pose(3))/(0.5*rrt.L) sin(start_pose(3))/(0.5*rrt.L)];
-            % ranges: each row: [xmin xmax ymin ymax]
-            ranges = [max(round(center(1)-rrt.L/2), rrt.XY_BOUNDARY(1)), ...
-                      min(round(center(1)+rrt.L/2), rrt.XY_BOUNDARY(2)), ...
-                      max(round(center(2)-rrt.L/2), rrt.XY_BOUNDARY(3)), ...
-                      min(round(center(2)+rrt.L/2), rrt.XY_BOUNDARY(4))];
-            
+        function clean_up_occ_grid(rrt)            
+            ranges = rrt.get_occ_robot_box(rrt.tree(1:3,1)');           
             rrt.occ_grid(ranges(3):ranges(4),ranges(1):ranges(2)) = zeros(ranges(4)-ranges(3)+1, ranges(2)-ranges(1)+1);
+        end
+        
+        % Return the ranges of a box around the center of the robot, given
+        % its position.
+        % ranges: [xmin xmax ymin ymax]
+        function ranges = get_occ_robot_box(rrt, pose)
+            center = pose(1:2) + [cos(pose(3))/(0.5*rrt.L) sin(pose(3))/(0.5*rrt.L)];
+            center_ind = rrt.get_occ_ind(center);
+            % ranges: each row: [xmin xmax ymin ymax]
+            fudge = 2;
+            
+            ranges = [max(round(center_ind(1)-0.5*rrt.L/rrt.XY_RESOLUTION-fudge), 1), ...
+                      min(round(center_ind(1)+0.5*rrt.L/rrt.XY_RESOLUTION+fudge), size(rrt.occ_grid,1)), ...
+                      max(round(center_ind(2)-0.5*rrt.L/rrt.XY_RESOLUTION-fudge), 1), ...
+                      min(round(center_ind(2)+0.5*rrt.L/rrt.XY_RESOLUTION+fudge), size(rrt.occ_grid,2))]; 
+        end
+        
+        
+        % since the occupancy grid doesn't have full resolution, convert
+        % from map (x,y) coordinates to the occupancy grid (x,y) indices.
+        function occ_ind = get_occ_ind(rrt, map_ind)
+            if ((map_ind(1) < rrt.XY_BOUNDARY(1)) || (map_ind(1) > rrt.XY_BOUNDARY(2)) || ...
+                (map_ind(2) < rrt.XY_BOUNDARY(3)) || (map_ind(2) > rrt.XY_BOUNDARY(4)))
+                occ_ind = [-1, -1];
+            else
+                [~, x_ind] = min(abs(rrt.gr_x - map_ind(1)));
+                [~, y_ind] = min(abs(rrt.gr_y - map_ind(2)));
+                occ_ind = [x_ind, y_ind];
+            end
         end
         
         % ==============================================================
@@ -80,14 +108,14 @@ classdef RRT3D < handle
         % ==============================================================
         
         % Antonized
-        % Generate and return random (x,y,theta) point in the environment.
+        % Generate and return random (x,y) point in the environment.
         function position = sample(rrt)
-            xyrand = rand(2,1);
             % pick the goal point with a 10% chance.
             if rand(1,1) < 0.1
                 position = rrt.goal_point';
             else
-                position = [rrt.XY_BOUNDARY(2); rrt.XY_BOUNDARY(4)] .* xyrand;
+                position = [rrt.XY_BOUNDARY(1); rrt.XY_BOUNDARY(3)] + ...
+                    [rrt.XY_BOUNDARY(2) - rrt.XY_BOUNDARY(1); rrt.XY_BOUNDARY(4) - rrt.XY_BOUNDARY(3)] .* rand(2,1);
             end
         end
         
@@ -95,10 +123,14 @@ classdef RRT3D < handle
         % Find the nearest node to the given node using the (x,y) Euclidian
         % distance, plus a weight on the rotation distance. 
         function node_index = nearest(rrt, new_node)
-            rrt.compare_table(1:(rrt.nodes_added)) = sum((rrt.tree(1:2, 1:(rrt.nodes_added)) - repmat(new_node(1:2),1,rrt.nodes_added)).^2);
-            [rrt.compare_table(1:(rrt.nodes_added)), rrt.index(1:(rrt.nodes_added))] = sort(rrt.compare_table(1:(rrt.nodes_added)));
-            node_index = rrt.index(1);
-            return;
+            % pick the start point with a 1% chance.
+            if rand(1,1) < 0.01
+                node_index = 1;
+            else
+                rrt.compare_table(1:(rrt.nodes_added)) = sum((rrt.tree(1:2, 1:(rrt.nodes_added)) - repmat(new_node(1:2),1,rrt.nodes_added)).^2);
+                [rrt.compare_table(1:(rrt.nodes_added)), rrt.index(1:(rrt.nodes_added))] = sort(rrt.compare_table(1:(rrt.nodes_added)));
+                node_index = rrt.index(1);
+            end
         end
         
         % Antonized
@@ -151,6 +183,7 @@ classdef RRT3D < handle
             valid = true;
             
             if inputs(2) < -rrt.MAX_STEER || inputs(2) > rrt.MAX_STEER
+                %fprintf('Exceeds max steering angle.\n');
                 valid = false;
                 return;
             end
@@ -171,6 +204,7 @@ classdef RRT3D < handle
             poses = zeros(steps,3);
             
             if (steps == 0)
+                %fprintf('Number of pose steps is zero....\n');
                 valid = false;
                 return;
             end
@@ -185,10 +219,11 @@ classdef RRT3D < handle
             final_node = poses(end,:);
             
             % check whether we're off the occ_grid
-            mins = round(min(poses,[],1));
-            maxs = round(max(poses,[],1));
+            min_ind = rrt.get_occ_ind(min(poses,[],1));
+            max_ind = rrt.get_occ_ind(max(poses,[],1));
             
-            if mins(1) < rrt.XY_BOUNDARY(1) || maxs(1) > rrt.XY_BOUNDARY(2) || mins(2) < rrt.XY_BOUNDARY(3) || maxs(2) > rrt.XY_BOUNDARY(4)
+            if min_ind(1) == -1 || max_ind(1) == -1 || min_ind(2) == -1 || max_ind(2) == -1
+                %fprintf('Off the occupancy grid.\n');
                 valid = false;
                 return;
             end
@@ -198,16 +233,19 @@ classdef RRT3D < handle
             % poses: each unique vehicle poses (avoid double-checking)
             poses = unique(round(poses), 'rows');
             % centers: centre of the vehicle at each of the unique poses
-            centers = poses(:, 1:2) + [cos(poses(:,3))/(0.5*rrt.L) sin(poses(:,3))/(0.5*rrt.L)];
-            % ranges: each row: [xmin xmax ymin ymax]
-            ranges = [max(round(centers(:,1)-rrt.L/2), rrt.XY_BOUNDARY(1)), ...
-                      min(round(centers(:,1)+rrt.L/2), rrt.XY_BOUNDARY(2)), ...
-                      max(round(centers(:,2)-rrt.L/2), rrt.XY_BOUNDARY(3)), ...
-                      min(round(centers(:,2)+rrt.L/2), rrt.XY_BOUNDARY(4))];
+%             centers = poses(:, 1:2) + [cos(poses(:,3))/(0.5*rrt.L) sin(poses(:,3))/(0.5*rrt.L)];
+%             % ranges: each row: [xmin xmax ymin ymax]
+%             ranges = [max(round(centers(:,1)-rrt.L/2), rrt.XY_BOUNDARY(1)), ...
+%                       min(round(centers(:,1)+rrt.L/2), rrt.XY_BOUNDARY(2)), ...
+%                       max(round(centers(:,2)-rrt.L/2), rrt.XY_BOUNDARY(3)), ...
+%                       min(round(centers(:,2)+rrt.L/2), rrt.XY_BOUNDARY(4))];
             
-            for i=1:size(ranges,1)
-                robot_occ_area = rrt.occ_grid(ranges(i,3):ranges(i,4),ranges(i,1):ranges(i,2));
+            for i=1:size(poses,1)                
+                ranges = rrt.get_occ_robot_box(poses(i,:));  
+                  
+                robot_occ_area = rrt.occ_grid(ranges(3):ranges(4), ranges(1):ranges(2));
                 if any(any(robot_occ_area))
+                    %fprintf('Robot intersects obstacle at step %d\n', i);
                     valid = false;
                     return;
                 end
@@ -219,7 +257,7 @@ classdef RRT3D < handle
         function new_node_ind = insert_node(rrt, parent_node_ind, new_node_pose, steer_inputs)
             % method insert new node in the tree
             rrt.nodes_added = rrt.nodes_added + 1;
-            rrt.tree(:, rrt.nodes_added) = [new_node_pose, steer_inputs]';                               % adding new node position 
+            rrt.tree(:, rrt.nodes_added) = [new_node_pose, steer_inputs]';                              % adding new node position 
             rrt.parent(rrt.nodes_added) = parent_node_ind;                                              % adding new node parent-children info
             rrt.children(parent_node_ind) = rrt.children(parent_node_ind) + 1;                          % adding new node parent-children info
             rrt.cost(rrt.nodes_added) = (1 + 4*(steer_inputs(1)<0)) * steer_inputs(3);                  % cost-to-come is distance traveled, x5 if moving backward                
@@ -372,7 +410,7 @@ classdef RRT3D < handle
                 current_index = rrt.parent(current_index);
             end
             backtrace_path(path_iter) = current_index;
-            close all;
+            % close all;
             figure;
             %set(gcf(), 'Renderer', 'opengl');
             hold on;
@@ -380,8 +418,11 @@ classdef RRT3D < handle
             %obstacle drawing
             bin_cmap = [1 1 1; 0 0 0];
             colormap(bin_cmap);
-            imagesc(rrt.occ_grid > 0);
-            
+            imagesc(rrt.gr_x, rrt.gr_y, rrt.occ_grid > 0);
+            set(gca,'YDir','normal')
+            axis image
+            xlabel('X')
+            ylabel('Y')
             
             drawn_nodes = zeros(1, rrt.nodes_added);
             for ind = rrt.nodes_added:-1:1;
@@ -397,10 +438,10 @@ classdef RRT3D < handle
                         else
                             color = 'g-';
                         end
-                        plot([rrt.tree(1,current_index);rrt.tree(1, rrt.parent(current_index))], ...
-                             [rrt.tree(2,current_index);rrt.tree(2, rrt.parent(current_index))],color,'LineWidth', 0.5);
-%                         plot([rrt.tree(1,current_index);rrt.tree(1, rrt.parent(current_index))], ...
-%                             [rrt.tree(2, current_index);rrt.tree(2, rrt.parent(current_index))],'+k');
+                        curr_node = rrt.tree(1:2,current_index);
+                        parent_node = rrt.tree(1:2,rrt.parent(current_index));
+                        
+                        plot([curr_node(1); parent_node(1)], [curr_node(2); parent_node(2)], color, 'LineWidth', 0.5);
                         drawn_nodes(current_index) = true;
                         
                     end
@@ -420,10 +461,12 @@ classdef RRT3D < handle
                 beta = dist*tan(phi)/rrt.L;   % turning angle
                 radius = dist/beta;           % turning radius
                 
-                CX = rrt.tree(1,backtrace_path(ind)) - sin(rrt.tree(3,backtrace_path(ind))) * radius;   % (CX,CY) is center of the turning circle                     
-                CY = rrt.tree(2,backtrace_path(ind)) + cos(rrt.tree(3,backtrace_path(ind))) * radius;   % (CX,CY) is center of the turning circle
+                curr_node = rrt.tree(1:2,backtrace_path(ind));
+                
+                CX = curr_node(1) - sin(rrt.tree(3,backtrace_path(ind))) * radius;   % (CX,CY) is center of the turning circle                     
+                CY = curr_node(2) + cos(rrt.tree(3,backtrace_path(ind))) * radius;   % (CX,CY) is center of the turning circle
 
-                a = atan2(rrt.tree(2,backtrace_path(ind)) - CY, rrt.tree(1,backtrace_path(ind)) - CX);
+                a = atan2(curr_node(2) - CY, curr_node(1) - CX);
                 
                 switch (speed < 0)
                     case 1
@@ -448,10 +491,10 @@ classdef RRT3D < handle
                 rrt.tree(2, backtrace_path) - sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.L - cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.W; ...
                 rrt.tree(2,backtrace_path) + sind(rrt.tree(3,backtrace_path)*180/pi)*rrt.L - cosd(rrt.tree(3,backtrace_path)*180/pi)*rrt.W], 'm', 'LineWidth', 2);
             
-            rrt.plot_circle(rrt.goal_point(1), rrt.goal_point(2), rrt.delta_goal_point);
-            axis(rrt.XY_BOUNDARY);
+            goal_ind = rrt.get_occ_ind(rrt.goal_point);
+            rrt.plot_circle(goal_ind(1), goal_ind(2), rrt.delta_goal_point);
             grid on;
-            axis equal;
+            %axis equal;
             disp(num2str(rrt.cumcost(backtrace_path(1))));
         end
         

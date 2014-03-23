@@ -7,33 +7,31 @@ function path = RRT_star(map, start, goal, params)
 %     start       - [x,y,theta] robot pose
 %     goal		  - [x,y] positions specifying goal point
 
-    RAND_SEED = 3;
-    MAX_ITER  = 5000;
-    MAX_NODES = 4000;
-
     params.start_pose = start;          % Robot start pose.
     params.goal_point = goal;           % Goal position [x,y]
-    params.delta_goal_point = 2;        % Radius of goal position region
-    params.delta_near = 20;             % Radius for neighboring nodes
     
-    problem = RRT3D(RAND_SEED, MAX_NODES, map, params);
+    problem = RRT3D(map, params);
 	
     h = waitbar(0, 'RRT planning...');
 
 	%%% Starting a timer
 	tic;
-	for ind = 1:MAX_ITER
-		waitbar(ind / MAX_ITER);
+	for ind = 1:params.RRT_MAX_ITER
+		waitbar(ind / params.RRT_MAX_ITER);
         
 		% Generate a random node
 		new_node = problem.sample();
-
+        %fprintf('new node: [%.2f, %.2f]\n',new_node(1), new_node(2));
+        
 		% Find the nearest existing node to the random node
 		nearest_node_ind = problem.nearest(new_node);
+        %fprintf('nearest index: %d\n', nearest_node_ind);
 
 		% Get new node via random steering from nearest node
 		steer_inputs = problem.steer(nearest_node_ind, new_node);
         [valid, final_node] = problem.validate(nearest_node_ind, steer_inputs);
+        %fprintf('steering inputs: [%.2f,%.2f,%.2f]\n', steer_inputs(1), steer_inputs(2), steer_inputs(3));
+        %fprintf('valid: %d\n', valid);
         if(valid)
             % Add a new node to the tree.
             new_node_ind = problem.insert_node(nearest_node_ind, final_node, steer_inputs);
@@ -51,12 +49,12 @@ function path = RRT_star(map, start, goal, params)
         end
 		
 		% display progress each 100 iterations
-        if(mod(ind, 100) == 0)
-			disp([num2str(ind) ' iterations ' num2str(problem.nodes_added-1) ' nodes in ' num2str(toc) ' rewired ' num2str(problem.num_rewired)]);
-            %problem.print_tree(ind);
-        end
+%         if(mod(ind, 100) == 0)
+% 			disp([num2str(ind) ' iterations ' num2str(problem.nodes_added-1) ' nodes in ' num2str(toc) ' rewired ' num2str(problem.num_rewired)]);
+%             %problem.print_tree(ind);
+%         end
         
-        if (problem.nodes_added == MAX_NODES)
+        if (problem.nodes_added == params.RRT_MAX_NODES)
             break;
         end
 	end
@@ -64,6 +62,6 @@ function path = RRT_star(map, start, goal, params)
     close(h);
  
     path = problem.return_path();
-    %problem.plot();
+%     problem.plot();
     
 end

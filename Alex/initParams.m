@@ -34,10 +34,15 @@ PARAMS.MAX_STEER = ...                  % Maximum steering angle
     asin(PARAMS.ROBOT_L/(PARAMS.ROBOT_MIN_TURN_RADIUS - PARAMS.ROBOT_W/2));
 
 % RRT* path planning parameters
-PARAMS.DRIVE_SPEED = 5;                 % Assumed driving speed for path planning.
+PARAMS.RRT_RAND_SEED = 1;                   % Seed for random number generator.
+PARAMS.RRT_MAX_ITER  = 5000;                % Max number of iterations
+PARAMS.RRT_MAX_NODES = 4000;                % Max number of nodes to store.
+PARAMS.RRT_DRIVE_SPEED = 5;                 % Assumed driving speed for path planning.
+PARAMS.RRT_DELTA_GOAL_POINT = 0.05;         % Radius of goal position region in metres
+PARAMS.RRT_DELTA_NEAR = 1;                  % Radius for neighboring nodes in metres
 
 % Driving Simulink Model parameters
-PARAMS.ROBOT_INIT_POSE = [72 22 pi/2];
+PARAMS.ROBOT_INIT_POSE = [0.42 0.32 pi/2];
 PARAMS.ROBOT_MAX_ACCEL = 5;
 PARAMS.ROBOT_SPEED_LIM = 20;
 PARAMS.ROBOT_POSE_RESET = 0;
