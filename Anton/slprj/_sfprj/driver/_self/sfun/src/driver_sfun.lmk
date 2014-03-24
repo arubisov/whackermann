@@ -10,7 +10,6 @@ OBJECTS = \
 	"driver_sfun.obj"\
 	"c1_driver.obj"\
 	"c5_driver.obj"\
-	"c7_driver.obj"\
 	"driver_sfun_registry.obj"\
 	"C:\Program Files (x86)\MATLAB\R2013a Student\sys\lcc\mex\lccdef.def"\
 	"C:\Program Files (x86)\MATLAB\R2013a Student\stateflow\c\mex\lib\win32\sfc_mexlcc.lib"\
@@ -38,7 +37,5 @@ c1_driver.obj :	"c1_driver.c"
 	$(CC) $(CFLAGS) $(INCLUDE_PATH) "c1_driver.c"
 c5_driver.obj :	"c5_driver.c"
 	$(CC) $(CFLAGS) $(INCLUDE_PATH) "c5_driver.c"
-c7_driver.obj :	"c7_driver.c"
-	$(CC) $(CFLAGS) $(INCLUDE_PATH) "c7_driver.c"
 driver_sfun_registry.obj :	"driver_sfun_registry.c"
 	$(CC) $(CFLAGS) $(INCLUDE_PATH) "driver_sfun_registry.c"

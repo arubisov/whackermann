@@ -359,7 +359,7 @@ start = cellfun(@str2num,start);
 %guidata(hObject,handles);  % commit target position to guidata
 
 path = RRT_star((handles.occ_binary > 25), [start(1) start(2) start(3)], [goal(1) goal(2)], handles.PARAMS);
-
+disp(path);
 handles.path = path;
 guidata(hObject, handles);
 
@@ -367,7 +367,6 @@ set(handles.push_exec_path, 'Enable', 'on');
 
 plotPathOnOcc(handles, path);
 
-%handles.world(y_f, x_f) = 3;
 updateOccBinary(hObject, eventdata, handles);
 
 
@@ -574,6 +573,14 @@ set_param('driver/Manual Drive/steer_speed','Value','0');
 set_param('driver/Color Detector/color_detect_threshold','Value',num2str(handles.PARAMS.COLOR_DETECT_THRESHOLD));
 set_param('driver/Path Follower/Exec Path','Value','0');
 set_param('driver/Path Follower/path','Value',mat2str(zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS)));
+set_param('driver/Path Follower/path','Value',mat2str(zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS)));
+set_param('driver/Path Follower/Rate Limiter Speed','risingSlewLimit',num2str(handles.PARAMS.ROBOT_MAX_ACCEL));
+set_param('driver/Path Follower/Rate Limiter Speed','fallingSlewLimit',num2str(-handles.PARAMS.ROBOT_MAX_ACCEL));
+set_param('driver/Path Follower/Rate Limiter Steer','risingSlewLimit',num2str(handles.PARAMS.ROBOT_MAX_ACCEL));
+set_param('driver/Path Follower/Rate Limiter Steer','fallingSlewLimit',num2str(-handles.PARAMS.ROBOT_MAX_ACCEL));
+set_param('driver/Dead Reckoning/Speed Subsystem/to meters','Value',num2str(handles.PARAMS.ROBOT_WHEEL_CIRCUM/360));
+set_param('driver/Path Follower/sfunc/path_index','Value','1');
+set_param('driver/Path Follower/sfunc/dist_to_next','Value','Inf');
 
 sim('driver');
 set(hObject,'String','CONNECTED');
