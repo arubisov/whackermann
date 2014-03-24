@@ -27,7 +27,7 @@ PARAMS.GROUND_HEIGHT = 5/100; % 5 cm
 PARAMS.ROBOT_L = 17/100;                % Wheelbase (length) of robot = 17cm
 PARAMS.ROBOT_W = 15.5/100;              % Track (width) of robot = 15.5cm
 PARAMS.ROBOT_R = 2.75/100;              % Radius of a wheel = 2.75cm
-PARAMS.ROBOT_MIN_TURN_RADIUS = 43/100;  % Minimum turn radius
+PARAMS.ROBOT_MIN_TURN_RADIUS = 43/100;  % Minimum turn radius = 43cm
 PARAMS.ROBOT_WHEEL_CIRCUM = ...         % Wheel circumference
     2* pi * PARAMS.ROBOT_R;
 PARAMS.MAX_STEER = ...                  % Maximum steering angle
