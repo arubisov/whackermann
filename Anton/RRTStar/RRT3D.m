@@ -378,6 +378,7 @@ classdef RRT3D < handle
                 current_index = rrt.parent(current_index);
             end
             path(:,path_iter) = rrt.tree(:,current_index);
+            path = fliplr(path);
         end
         
         

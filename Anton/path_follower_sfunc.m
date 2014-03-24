@@ -372,11 +372,15 @@ function Outputs(block)
     path = block.InputPort(2).Data;
     exec_path = block.InputPort(3).Data;
     steering = block.Dwork(2).Data;
+    
+    % prune off columns of zeros.
+    path(:, all(~path,1)) = [];
 
     % are we executing?
     if ~exec_path
         speed = 0;
         steer_speed = 0;
+        InitializeConditions(block);
     % if we're executing, are we in steering mode?
     elseif (steering)
         speed = 0;
@@ -388,7 +392,10 @@ function Outputs(block)
         else                                % otherwise stop steering
             steer_speed = 0;
             block.Dwork(2).Data = false;
+            block.Dwork(3).Data = Inf;
         end
+        
+        fprintf('PATH FOLLOWER: vel=%.2f, steer=%.2f\n', speed, steer_speed);
         
     % otherwise, let's drive outta here.    
     else
@@ -400,10 +407,9 @@ function Outputs(block)
         % assume we start at the first point. keep track of distance to
         % next point; soon as distance starts growing, we know we're
         % switching to the next target. 
-        from_node = path(:,block.Dwork(1).Data);
         to_node = path(:,block.Dwork(1).Data+1);     
         
-        dist = norm(from_node(1:2) - to_node(1:2));
+        dist = norm(pose(1:2) - to_node(1:2));
         
         % have we passed our target node?
         if dist > block.Dwork(3).Data
@@ -416,18 +422,20 @@ function Outputs(block)
             % if we've reached the end of the path, stop execution and reset.
             if block.Dwork(1).Data == size(path,2)
                 set_param('driver/Path Follower/Exec Path','Value','0');
-                set_param('driver/Path Follower/path','Value','[]');
-                InitializeConditions(block)
+                set_param('driver/Path Follower/path','Value','zeros(6,20)');
+                InitializeConditions(block);
             end
             
         % otherwise life's all good and let's just drive toward the goal.
         else
+            block.Dwork(3).Data = dist;
+            
             steer_speed = - block.DialogPrm(1).Data * block.ContStates.Data(1) ...
                      - block.DialogPrm(2).Data * block.ContStates.Data(2) ...
                      - block.DialogPrm(3).Data * block.ContStates.Data(3);
 
             drive_speed = 20;
-            direction = 1 - 2*(pose(4) < 0);
+            direction = 1 - 2*(to_node(4) < 0);
 
             speed = direction * drive_speed;
             fprintf('PATH FOLLOWER: vel=%.2f, steer=%.2f\n', speed, steer_speed);
@@ -436,6 +444,9 @@ function Outputs(block)
     
     block.OutputPort(1).Data = steer_speed;
     block.OutputPort(2).Data = speed;
+    
+    set_param('driver/Manual Drive/steer_speed','Value',num2str(steer_speed));
+    set_param('driver/Manual Drive/drive_speed','Value',num2str(speed));
 %endfunction
 
 

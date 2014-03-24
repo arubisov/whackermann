@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 20-Mar-2014 14:24:30
+% Last Modified by GUIDE v2.5 23-Mar-2014 19:47:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -63,17 +63,14 @@ guidata(hObject, handles);
 
 initParams;
 initFrame;
-% initialize the axes plot with the world:
 
-world = zeros(100,100);
-
-handles.world = world;
 handles.default_cmap = colormap;
 handles.context = context;
 handles.depth = depth;
 handles.rgb = rgb;
 handles.PARAMS = PARAMS;
-handles.path = [];
+handles.path = zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS);
+handles.reset_robot_xy = false;
 guidata(hObject,handles);
 
 loadOccGrids(hObject, eventdata, handles);
@@ -129,18 +126,30 @@ Disk = (( handles.v'*handles.n / (L'*handles.n) ) * L)';
 
 [Dx,Dy,~] = getWorldPointMap(Disk(:,1),Disk(:,2),Disk(:,3),handles.n,handles.Oax,handles.Xax,handles.Yax);
 
+if (get(handles.toggle_click_circles,'Value') == 1)
+    fileID = fopen('circles.txt','a');
+    fprintf(fileID,'(%.2f,%.2f)\n', Dx, Dy);
+    fclose(fileID);
+    num_detected = str2double(get(handles.lbl_num_circles,'String'));
+    set(handles.lbl_num_circles,'String',num2str(num_detected+1));
+    return; 
+end
+
+
 if (handles.reset_robot_xy)
+    handles.reset_robot_xy = false;
+    guidata(hObject,handles);
+    
     pose = get(handles.txt_robot_pose,'String');
     pose = pose(2:end-1);
     pose = regexp(pose, ',', 'split');
-    pose = cellfun(@str2num,pose);
-    set(handles.txt_robot_pose,'String',sprintf('[%.2f,%.2f,%.2f,%.2f]',Dx, Dy, pose(3), pose(4)));
-    handles.reset_robot_xy = false;
-    % TODO: pass new coordinates back to Simulink model
-    set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%d,%d,%d]',Dx, Dy, pose(3)));
-    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','true');
-    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false');
-    guidata(hObject,handles);
+    
+    % pass new coordinates back to Simulink model
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%s,%s,%s]', num2str(Dx), num2str(Dy), pose(3)));
+    
+    curr_reset = get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value');
+    if strcmp(curr_reset,'false'), set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','true');
+    else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false'); end
 else
     set(handles.txt_goal,'String',sprintf('%.2f,%.2f',Dx, Dy));
 end
@@ -161,7 +170,7 @@ end
 % y1 = max(1, point(2));
 % 
 % %handles.world(y1:y1, x1:x1) = 1;
-% set(findobj('Tag','txt_goal'),'string',sprintf('%d,%d',x1, y1));
+% set(handles.txt_goal,'String',sprintf('%d,%d',x1, y1));
 % guidata(hObject,handles);
 
 
@@ -263,10 +272,10 @@ function plotPathOnOcc(handles, path)
 subplot(handles.axes_occ_binary);
 hold on
 
-for ind = size(path,2):-1:2
-    speed = path(4,ind-1);
-    phi = path(5,ind-1);
-    dist = path(6,ind-1);
+for ind = 1:size(path,2)-1
+    speed = path(4,ind+1);
+    phi = path(5,ind+1);
+    dist = path(6,ind+1);
     robot_length = handles.PARAMS.ROBOT_L;
 
     beta = dist*tan(phi)/robot_length;              % turning angle
@@ -300,7 +309,7 @@ plot([path(1,:) + cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L + sind(path(3,:)
     path(2,:) - sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L - cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W; ...
     path(2,:) + sind(path(3,:)*180/pi)*handles.PARAMS.ROBOT_L - cosd(path(3,:)*180/pi)*handles.PARAMS.ROBOT_W], 'm', 'LineWidth', 2);
 
-plotOccPathArc(0,2*pi,path(1,1),path(2,1),handles.PARAMS.RRT_DELTA_GOAL_POINT,'r-');
+plotOccPathArc(0,2*pi,path(1,end),path(2,end),handles.PARAMS.RRT_DELTA_GOAL_POINT,'r-');
 hold off
 
 
@@ -317,12 +326,14 @@ x = r*cos(t) + h;
 y = r*sin(t) + k;
 plot(x,y,color, 'LineWidth', 2);
 
+
 function updateCameraView(hObject, eventdata, handles)
 subplot(handles.axes_camera);
-%handle = imshow(cat(3,fliplr(handles.rgb(:,:,1)),fliplr(handles.rgb(:,:,2)),fliplr(handles.rgb(:,:,3))));
 handle = imshow(handles.rgb);
 set(handle, 'ButtonDownFcn', {@axes_camera_ButtonDownFcn});
+axis image;
 %set(findobj(gca,'type','image'),'hittest','off')
+
 
 % --- Executes on button press in push_RRT.
 function push_RRT_Callback(hObject, eventdata, handles)
@@ -349,9 +360,10 @@ start = cellfun(@str2num,start);
 
 path = RRT_star((handles.occ_binary > 25), [start(1) start(2) start(3)], [goal(1) goal(2)], handles.PARAMS);
 
-handles.curr_path = path;
-set(handles.push_exec_path, 'Enable', 'on');
+handles.path = path;
 guidata(hObject, handles);
+
+set(handles.push_exec_path, 'Enable', 'on');
 
 plotPathOnOcc(handles, path);
 
@@ -366,8 +378,10 @@ function push_clear_path_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 set(handles.push_exec_path, 'Enable', 'off');
-handles.curr_path = [];
+handles.path = zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS);
 guidata(hObject, handles);
+set_param('driver/Path Follower/Exec Path','Value','0');
+set_param('driver/Path Follower/path','Value',mat2str(handles.path));
 
 subplot(handles.axes_occ_binary);
 imagesc(handles.gr_x, handles.gr_y, (handles.occ_binary > 25));
@@ -390,13 +404,13 @@ if status == 0
     push_stop_Callback(hObject, eventdata, handles)
     set(hObject,'String','DISABLED');
     set(hObject,'ForegroundColor','black');
-    set(findobj('Tag','lbl_current_angle'),'visible','off');
-    set(findobj('Tag','txt_current_angle'),'visible','off');
+    set(handles.lbl_current_angle,'visible','off');
+    set(handles.txt_current_angle,'visible','off');
 else
     set(hObject,'String','ENABLED');
     set(hObject,'ForegroundColor','red');
-    set(findobj('Tag','lbl_current_angle'),'visible','on');
-    set(findobj('Tag','txt_current_angle'),'visible','on');
+    set(handles.lbl_current_angle,'visible','on');
+    set(handles.txt_current_angle,'visible','on');
 end
 
 
@@ -424,7 +438,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-
 function txt_drive_speed_Callback(hObject, eventdata, handles)
 % hObject    handle to txt_drive_speed (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -433,6 +446,7 @@ function txt_drive_speed_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of txt_drive_speed as text
 %        str2double(get(hObject,'String')) returns contents of txt_drive_speed as a double
 set_param('driver/Manual Drive/drive_speed','Value',num2str(get(hObject,'string')));
+
 
 % --- Executes during object creation, after setting all properties.
 function txt_drive_speed_CreateFcn(hObject, eventdata, handles)
@@ -452,8 +466,8 @@ function push_stop_Callback(hObject, eventdata, handles)
 % hObject    handle to push_stop (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-set(findobj('Tag','txt_steer_speed'),'string','0');
-set(findobj('Tag','txt_drive_speed'),'string','0');
+set(handles.txt_steer_speed,'String','0');
+set(handles.txt_drive_speed,'String','0');
 set_param('driver/Manual Drive/steer_speed','Value','0');
 set_param('driver/Manual Drive/drive_speed','Value','0');
 
@@ -499,7 +513,11 @@ function push_exec_path_Callback(hObject, eventdata, handles)
 if (~handles.path) 
 	error('No path found.');
 else
-	set_param('driver/Path Follower/path','Value',handles.path);
+    num_waypoints = min(size(handles.path, 2), handles.PARAMS.RRT_MAX_WAYPOINTS);
+    path = zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS);
+    path(:, 1:num_waypoints) = handles.path;
+    
+	set_param('driver/Path Follower/path','Value',mat2str(path));
     set_param('driver/Path Follower/Exec Path','Value','1');
 end
 
@@ -513,30 +531,26 @@ function figure1_WindowKeyPressFcn(hObject, eventdata, handles)
 %	Character: character interpretation of the key(s) that was pressed
 %	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
 % handles    structure with handles and user data (see GUIDATA)
-if get(findobj('Tag','toggle_manual_drive'),'Value') == 1
+if get(handles.toggle_manual_drive,'Value') == 1
    if strcmp(eventdata.Key, 'uparrow')
        % increase forward speed
-       txt_speed = findobj('Tag','txt_drive_speed');
-       old_speed = str2double(get(txt_speed,'string'));
-       set(txt_speed,'string',num2str(old_speed + 1));
+       old_speed = str2double(get(handles.txt_drive_speed,'string'));
+       set(handles.txt_drive_speed,'String',num2str(old_speed + 1));
        set_param('driver/Manual Drive/drive_speed','Value',num2str(old_speed + 1));
    elseif strcmp(eventdata.Key, 'downarrow')
        % decrease forward speed
-       txt_speed = findobj('Tag','txt_drive_speed');
-       old_speed = str2double(get(txt_speed,'string'));
-       set(txt_speed,'string',num2str(old_speed - 1));
+       old_speed = str2double(get(handles.txt_drive_speed,'string'));
+       set(handles.txt_drive_speed,'string',num2str(old_speed - 1));
        set_param('driver/Manual Drive/drive_speed','Value',num2str(old_speed - 1));
    elseif strcmp(eventdata.Key, 'leftarrow')
        % turn left, ie increase motor speed
-       txt_speed = findobj('Tag','txt_steer_speed');
-       old_speed = str2double(get(txt_speed,'string'));
-       set(txt_speed,'string',num2str(old_speed + 1));
+       old_speed = str2double(get(handles.txt_steer_speed,'string'));
+       set(handles.txt_steer_speed,'string',num2str(old_speed + 1));
        set_param('driver/Manual Drive/steer_speed','Value',num2str(old_speed + 1));
    elseif strcmp(eventdata.Key, 'rightarrow')
        % turn right, ie decrease motor speed 
-       txt_speed = findobj('Tag','txt_steer_speed');
-       old_speed = str2double(get(txt_speed,'string'));
-       set(txt_speed,'string',num2str(old_speed - 1));
+       old_speed = str2double(get(handles.txt_steer_speed,'string'));
+       set(handles.txt_steer_speed,'string',num2str(old_speed - 1));
        set_param('driver/Manual Drive/steer_speed','Value',num2str(old_speed - 1));
    end
 end
@@ -549,14 +563,23 @@ function toggle_connect_simulink_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of toggle_connect_simulink
-status = get(hObject,'Value');
-if status == 1
-    set(hObject,'String','CONNECTED');
-    set(hObject,'ForegroundColor','red');
-    sim('driver');
-else
-    set_param(gcs, 'SimulationCommand', 'stop');
-end
+set_param('driver/Dead Reckoning/Bicycle Model/robot_L','Value',num2str(handles.PARAMS.ROBOT_L));
+set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',num2str(handles.PARAMS.ROBOT_INIT_POSE));
+set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false');
+set_param('driver/Dead Reckoning/Steering Subsystem/robot_init_phi','Value','0');
+set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','false');
+set_param('driver/Manual Drive/Manual Mode','Value','0');
+set_param('driver/Manual Drive/drive_speed','Value','0');
+set_param('driver/Manual Drive/steer_speed','Value','0');
+set_param('driver/Color Detector/color_detect_threshold','Value',num2str(handles.PARAMS.COLOR_DETECT_THRESHOLD));
+set_param('driver/Path Follower/Exec Path','Value','0');
+set_param('driver/Path Follower/path','Value',mat2str(zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS)));
+
+sim('driver');
+set(hObject,'String','CONNECTED');
+set(hObject,'ForegroundColor','red');
+set(hObject,'Enable','off');
+
 
 
 % --- Executes on button press in push_setrobotxy.
@@ -573,6 +596,27 @@ function push_setrobottheta_Callback(hObject, eventdata, handles)
 % hObject    handle to push_setrobottheta (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+pose = get(handles.txt_robot_pose,'String');
+pose = pose(2:end-1);
+pose = regexp(pose, ',', 'split');
+
+prompt = {'Override robot x:', 'Override robot y:', 'Override robot orientation:', 'Override robot steering:'};
+dlg_title = 'Input';
+num_lines = 1;
+answer = inputdlg(prompt,dlg_title,num_lines,pose);
+
+% pass new coordinates back to Simulink model
+set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%s,%s,%s]', answer{1}, answer{2}, answer{3}));
+set_param('driver/Dead Reckoning/Steering Subsystem/robot_init_phi','Value',sprintf('%s',answer{4}));
+
+curr_reset = get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value');
+if strcmp(curr_reset,'false')
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','true');
+    set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','true');
+else
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false');
+    set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','false');
+end
 
 
 % --- Executes on button press in push_selfimplode.
@@ -580,3 +624,21 @@ function push_selfimplode_Callback(hObject, eventdata, handles)
 % hObject    handle to push_selfimplode (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in toggle_click_circles.
+function toggle_click_circles_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_click_circles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of toggle_click_circles
+if get(hObject,'Value') == 1
+    set(hObject,'String','Circle Location Logging: ON');
+    set(hObject,'ForegroundColor','red');
+else
+    set(hObject,'String','Circle Location Logging: OFF');
+    set(hObject,'ForegroundColor','black');
+end
+
+    

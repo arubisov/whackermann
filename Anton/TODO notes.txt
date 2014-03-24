@@ -28,6 +28,6 @@ ON THURSDAY:
 
 (1) DONE. Realized that path planner takes in the occupancy grid, not the map.
 (2) DONE.
-(3) Work in progress...
-(4) DONE
-(5) Work in progress...
+(3) DONE.
+(4) DONE.
+(5) DONE.

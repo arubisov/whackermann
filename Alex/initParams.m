@@ -40,9 +40,11 @@ PARAMS.RRT_MAX_NODES = 4000;                % Max number of nodes to store.
 PARAMS.RRT_DRIVE_SPEED = 5;                 % Assumed driving speed for path planning.
 PARAMS.RRT_DELTA_GOAL_POINT = 0.05;         % Radius of goal position region in metres
 PARAMS.RRT_DELTA_NEAR = 1;                  % Radius for neighboring nodes in metres
+PARAMS.RRT_MAX_WAYPOINTS = 20;              % Maximum number of waypoints that get fed to the path follower.
 
 % Driving Simulink Model parameters
-PARAMS.ROBOT_INIT_POSE = [0.42 0.32 pi/2];
+PARAMS.ROBOT_INIT_POSE = [0 0 0];
 PARAMS.ROBOT_MAX_ACCEL = 5;
 PARAMS.ROBOT_SPEED_LIM = 20;
 PARAMS.ROBOT_POSE_RESET = 0;
+PARAMS.COLOR_DETECT_THRESHOLD = 200;
