@@ -56,7 +56,7 @@ ImInd = AllInd(ImLgc(:));
 i = mod(ImInd-1,m)+1;
 j = floor((ImInd-1)/m)+1;
 % [i,j] = ind2sub([m n],DepthPosInd);
-XYZ = repmat(double(depth(ImLgc))',3,1) .* (R * ...
+XYZ = repmat(double(depth(ImLgc)+PARAMS.IMAGE_CORRECTION_FACTOR)',3,1) .* (R * ...
         [ sin_horiz_rad(j) ;
           ones(1,length(j));
           sin_vert_rad(i) ]);

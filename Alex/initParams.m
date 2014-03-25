@@ -8,6 +8,9 @@ PARAMS.HORIZ_RGB_FOV = 57.5 / 360 * 2 * pi; % 57.5 degrees
 % Estimated Kinect sensor angle
 PARAMS.SENSOR_ANGLE_DEG = 15; % 15 degrees downward
 
+% Factor for correcting the image (arbitrary, increases focal length)
+PARAMS.IMAGE_CORRECTION_FACTOR = 400;
+
 % Too high? -> Less accurate result!
 % Too low? -> Slow computation.
 % Should be an int > 0.
