@@ -1,16 +1,15 @@
 % Returns the indicies of points from the point cloud lying on the ground
 % plane.
 
-function [GInd] = getGroundPoints(X,Y,Z,n,v)
+function [GInd,OInd] = getGroundPoints(Z,PARAMS)
 
-MAXIMUM_GROUND_DISTANCE = 120;
+% X = X - v(1);
+% Y = Y - v(2);
+% Z = Z - v(3);
 
-X = X - v(1);
-Y = Y - v(2);
-Z = Z - v(3);
+% d = n'* [ X' ;
+%           Y' ;
+%           Z'];
 
-d = n'* [ X' ;
-          Y' ;
-          Z'];
-
-GInd = d < MAXIMUM_GROUND_DISTANCE;
+GInd = Z < PARAMS.GROUND_HEIGHT;
+OInd = PARAMS.GROUND_HEIGHT < Z & Z < PARAMS.ROBOT_HEIGHT;

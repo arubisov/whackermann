@@ -5,8 +5,8 @@ initParams;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
 [n,v] = getGroundPlane(X,Y,Z,PARAMS);
-[Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb);
-[X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax);
+[Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb,PARAMS);
+[X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax,PARAMS);
 [Occ,Known,gr_x,gr_y] = getOccupancyGrid(X,Y,Z,PARAMS);
 
 figure
@@ -17,6 +17,15 @@ xlabel('X')
 ylabel('Y')
 zlabel('Z')
 axis equal
+
+% subplot(2,2,4)
+% imagesc(gr_x,gr_y,Occ./Known)
+% set(gca,'YDir','normal')
+% axis image
+% xlabel('X')
+% ylabel('Y')
+% title('Occupancy Certainity Grid')
+% colorbar;
 
 % Grid = single(Occ)./single(Known);
 % Grid(isnan(Grid)) = -1;

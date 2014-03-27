@@ -10,9 +10,10 @@ rng = [floor(min(Y)/XY_RESOLUTION) ceil(max(Y)/XY_RESOLUTION)] * XY_RESOLUTION;
 gr_x = dom(1):XY_RESOLUTION:dom(2);
 gr_y = rng(1):XY_RESOLUTION:rng(2);
 
-Occ = int8(zeros(length(gr_y)-1,length(gr_x)-1));
+Occ = uint8(zeros(length(gr_y)-1,length(gr_x)-1));
 Known = Occ;
 
+% This code is a clearer version of the below
 % for i = 1:length(Z),
 %     
 %     if GROUND_HEIGHT < Z(i) && Z(i) < ROBOT_HEIGHT, % Case: Occupied

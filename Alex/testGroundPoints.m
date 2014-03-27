@@ -5,24 +5,32 @@ initParams;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
 [n,v] = getGroundPlane(X,Y,Z,PARAMS);
-GInd = getGroundPoints(X,Y,Z,n,v);
+[Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb,PARAMS);
+[X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax,PARAMS);
+[GInd,OInd] = getGroundPoints(Z,PARAMS);
 
 gnd_s = ImInd(GInd);
 
 gnd = false(size(depth));
 gnd(gnd_s) = true;
-X = X(~GInd);
-Y = Y(~GInd);
-Z = Z(~GInd);
+XG = X(~GInd & ~OInd);
+YG = Y(~GInd & ~OInd);
+ZG = Z(~GInd & ~OInd);
+
+XO = X(OInd);
+YO = Y(OInd);
+ZO = Z(OInd);
 
 figure(1)
-k = 137;
-scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
-% scatter(downsample(Y,k),downsample(Z,k),'.')
+k = 13;
+scatter3(downsample(XG,k),downsample(YG,k),downsample(ZG,k),'.')
 hold on
+k = 137;
+scatter3(downsample(XO,k),downsample(YO,k),downsample(ZO,k),'.','red')
+% scatter(downsample(Y,k),downsample(Z,k),'.')
 axis equal
 % Find 4 points on the plane.
-pts = repmat(v',4,1) + 1000 * ...
+pts = 0.5 * ...
       [cross(n, [ 1  0  0] ) ;
        cross(n, [-1  0  0] ) ;
        cross(n, [ 0  1  0] ) ;

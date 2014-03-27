@@ -42,7 +42,7 @@ while true
 %         horiz_rad = (1/2 - (depth_n-nd(i)-1)/(depth_n-1)) * HORIZ_RGB_FOV;
 
         sin_vert_rad = (depth_m/2 - md(i))/focalLengthZ;
-        sin_horiz_rad = (depth_n/2 - nd(i))/focalLengthX;
+        sin_horiz_rad = (-depth_n/2 + nd(i))/focalLengthX;
             
         L = R * [sin_horiz_rad ;
                  1             ;
@@ -53,11 +53,11 @@ while true
 
     end
 
-    [Dx,Dy,~] = getWorldPointMap(Disk(:,1),Disk(:,2),Disk(:,3),n,Oax,Xax,Yax);
+    [Dx,Dy,~] = getWorldPointMap(Disk(:,1),Disk(:,2),Disk(:,3),n,Oax,Xax,Yax,PARAMS);
     
     
     figure(h)
-    title(['x = ' num2str(Dx,3) '; y = ' num2str(Dy,3) ';'])
+    title(['x = '  sprintf('%2.2f',Dx) '; y = ' sprintf('%2.2f',Dy) ';']) 
     
     % For testing
 %     figure(2)

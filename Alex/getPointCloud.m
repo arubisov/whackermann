@@ -28,7 +28,7 @@ focalLengthZ = m/2/tan(VERT_RGB_FOV/2);
 focalLengthX = n/2/tan(HORIZ_RGB_FOV/2);
 
 sin_vert_rad = (-1*(1:m)+m/2)/focalLengthZ;
-sin_horiz_rad = (-1*(1:n)+n/2)/focalLengthX;
+sin_horiz_rad = ((1:n)-n/2)/focalLengthX;
 
 % k = 1;
 % for i = 1:m,

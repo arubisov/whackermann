@@ -5,7 +5,7 @@ initParams;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
 [n,v] = getGroundPlane(X,Y,Z,PARAMS);
-[Oax,Xax,Yax,Oax3,Xax3,Yax3] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb);
+[Oax,Xax,Yax,Oax3,Xax3,Yax3] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb,PARAMS);
 
 k = 137;
 scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
