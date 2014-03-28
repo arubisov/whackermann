@@ -1,8 +1,8 @@
 % Defines the constants used
 
 PARAMS.PYLON_O = [0 0];
-PARAMS.PYLON_X = [0.5 0];
-PARAMS.PYLON_Y = [0 0.5];
+PARAMS.PYLON_X = [1 0];
+PARAMS.PYLON_Y = [0 1];
 
 if exist('3Dax.mat','file'), delete('3Dax.mat'); end
 
@@ -23,10 +23,10 @@ PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 103;
 % Too high? -> Obstacles can be considered ground.
 % Too low? -> Fit more vulnerable to noise.
 % Should be an int > 2. Dependent on GROUND_PLANE_DECIMATION_FACTOR.
-PARAMS.GROUND_PLANE_POINT_THRESHOLD = 800;
+PARAMS.GROUND_PLANE_POINT_THRESHOLD = 1200;
 
 % Occupancy grid parameters
-PARAMS.XY_RESOLUTION = 2.5/100; % 2.5 cm
+PARAMS.XY_RESOLUTION = 5/100; % 5 cm
 PARAMS.ROBOT_HEIGHT = 20/100; % 20 cm
 PARAMS.GROUND_HEIGHT = 5/100; % 5 cm
 

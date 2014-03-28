@@ -10,7 +10,7 @@ rng = [floor(min(Y)/XY_RESOLUTION) ceil(max(Y)/XY_RESOLUTION)] * XY_RESOLUTION;
 gr_x = dom(1):XY_RESOLUTION:dom(2);
 gr_y = rng(1):XY_RESOLUTION:rng(2);
 
-Occ = uint8(zeros(length(gr_y)-1,length(gr_x)-1));
+Occ = uint16(zeros(length(gr_y)-1,length(gr_x)-1));
 Known = Occ;
 
 % This code is a clearer version of the below
