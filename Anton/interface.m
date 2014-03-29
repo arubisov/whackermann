@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 23-Mar-2014 19:47:54
+% Last Modified by GUIDE v2.5 29-Mar-2014 15:33:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -146,10 +146,14 @@ if (handles.reset_robot_xy)
     
     % pass new coordinates back to Simulink model
     set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%d,%d,%s]', Dx, Dy, pose{3}));
-    
-    curr_reset = get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value');
-    if strcmp(curr_reset,'false'), set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','true');
-    else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false'); end
+  
+    % reset the pose integrator
+    curr_reset = str2double(get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value'));
+    if curr_reset == 1
+        set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','-1');
+    else
+        set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1');
+    end
 else
     set(handles.txt_goal,'String',sprintf('%.2f,%.2f',Dx, Dy));
 end
@@ -552,6 +556,12 @@ if get(handles.toggle_manual_drive,'Value') == 1
        old_speed = str2double(get(handles.txt_steer_speed,'string'));
        set(handles.txt_steer_speed,'string',num2str(old_speed - 1));
        set_param('driver/Manual Drive/steer_speed','Value',num2str(old_speed - 1));
+   elseif strcmp(eventdata.Key, 'space')
+       % stop everything
+       set(handles.txt_steer_speed,'string','0');
+       set_param('driver/Manual Drive/steer_speed','Value','0');
+       set(handles.txt_drive_speed,'string','0');
+       set_param('driver/Manual Drive/drive_speed','Value','0');
    end
 end
 
@@ -565,9 +575,7 @@ function toggle_connect_simulink_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of toggle_connect_simulink
 set_param('driver/Dead Reckoning/Bicycle Model/robot_L','Value',num2str(handles.PARAMS.ROBOT_L));
 set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',mat2str(handles.PARAMS.ROBOT_INIT_POSE));
-set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false');
-set_param('driver/Dead Reckoning/Steering Subsystem/robot_init_phi','Value','0');
-set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','false');
+set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1');
 set_param('driver/Manual Drive/Manual Mode','Value','0');
 set_param('driver/Manual Drive/drive_speed','Value','0');
 set_param('driver/Manual Drive/steer_speed','Value','0');
@@ -581,7 +589,6 @@ set_param('driver/Path Follower/Rate Limiter Steer','risingSlewLimit',num2str(ha
 set_param('driver/Path Follower/Rate Limiter Steer','fallingSlewLimit',num2str(-handles.PARAMS.ROBOT_MAX_ACCEL));
 set_param('driver/Dead Reckoning/Speed Subsystem/to meters','Gain',num2str(handles.PARAMS.ROBOT_WHEEL_CIRCUM/360));
 
-set_param('driver', 'SimulationCommand', 'start');
 set(hObject,'String','CONNECTED');
 set(hObject,'ForegroundColor','red');
 set(hObject,'Enable','off');
@@ -615,13 +622,13 @@ answer = inputdlg(prompt,dlg_title,num_lines,pose);
 set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%s,%s,%s]', answer{1}, answer{2}, answer{3}));
 set_param('driver/Dead Reckoning/Steering Subsystem/robot_init_phi','Value',sprintf('%s',answer{4}));
 
-curr_reset = get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value');
-if strcmp(curr_reset,'false')
-    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','true');
-    set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','true');
+curr_reset = str2double(get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value'));
+if curr_reset == 1
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','-1');
+    set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','-1');
 else
-    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','false');
-    set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','false');
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1');
+    set_param('driver/Dead Reckoning/Steering Subsystem/robot_phi_reset','Value','1');
 end
 
 
@@ -648,3 +655,15 @@ else
 end
 
     
+
+
+% --- Executes on button press in push_refresh_pose.
+function push_refresh_pose_Callback(hObject, eventdata, handles)
+% hObject    handle to push_refresh_pose (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+%create a run time object that can return the value of the block's
+%output and then put the value in a string.
+rto = get_param('driver/Dead Reckoning/Bicycle Model/Pose Integrator','RuntimeObject');
+pose = sprintf('[%.2f,%.2f,%.2f]',rto.OutputPort(1).Data(1), rto.OutputPort(1).Data(2), rto.OutputPort(1).Data(3));
+set(handles.txt_robot_pose,'String',pose);
