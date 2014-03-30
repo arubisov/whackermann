@@ -5,20 +5,13 @@ function [n,v] = getGroundPlane(X,Y,Z,PARAMS)
 
 %% INIT
 
-% Too high? -> Less accurate result!
-% Too low? -> Slow computation.
-% Should be an int > 0.
 GROUND_PLANE_DECIMATION_FACTOR = PARAMS.GROUND_PLANE_DECIMATION_FACTOR;
-
-% Too high? -> Obstacles can be considered ground.
-% Too low? -> Fit more vulnerable to noise.
-% Should be an int > 2. Dependent on DECIMATION_FACTOR.
 GROUND_PLANE_POINT_THRESHOLD = PARAMS.GROUND_PLANE_POINT_THRESHOLD;
 
 if GROUND_PLANE_DECIMATION_FACTOR ~= 1,
-    X = decimate(X,GROUND_PLANE_DECIMATION_FACTOR);
-    Y = decimate(Y,GROUND_PLANE_DECIMATION_FACTOR);
-    Z = decimate(Z,GROUND_PLANE_DECIMATION_FACTOR);
+    X = downsample(X,GROUND_PLANE_DECIMATION_FACTOR);
+    Y = downsample(Y,GROUND_PLANE_DECIMATION_FACTOR);
+    Z = downsample(Z,GROUND_PLANE_DECIMATION_FACTOR);
 end
 
 Z_ind = [Z (1:length(Z))'];

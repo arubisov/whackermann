@@ -37,12 +37,16 @@ OccLgc = GROUND_HEIGHT < Z & Z < ROBOT_HEIGHT;
 NonOccLgc = Z < GROUND_HEIGHT;
 OccInd = AllInd(OccLgc);
 NonOccInd = AllInd(NonOccLgc);
+
 x = floor( (X(OccInd) - dom(1)) / XY_RESOLUTION ) + 1;
 y = floor( (Y(OccInd) - rng(1)) / XY_RESOLUTION ) + 1;
 s = sub2ind(size(Occ),y,x);
+
 for i = 1:length(s), Known(s(i)) = Known(s(i)) + 1; end
 for i = 1:length(s), Occ(s(i)) = Occ(s(i)) + 1; end
+
 x = floor( (X(NonOccInd) - dom(1)) / XY_RESOLUTION ) + 1;
 y = floor( (Y(NonOccInd) - rng(1)) / XY_RESOLUTION ) + 1;
 s = sub2ind(size(Occ),y,x);
+
 for i = 1:length(s), Known(s(i)) = Known(s(i)) + 1; end

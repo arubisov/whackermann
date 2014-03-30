@@ -23,7 +23,7 @@ PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 137;
 % Too high? -> Obstacles can be considered ground.
 % Too low? -> Fit more vulnerable to noise.
 % Should be an int > 2. Dependent on GROUND_PLANE_DECIMATION_FACTOR.
-PARAMS.GROUND_PLANE_POINT_THRESHOLD = 1200;
+PARAMS.GROUND_PLANE_POINT_THRESHOLD = 800;
 
 % Occupancy grid parameters
 PARAMS.XY_RESOLUTION = 5/100; % 5 cm

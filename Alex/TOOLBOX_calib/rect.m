@@ -40,7 +40,7 @@ end;
 
 [nr,nc] = size(I);
 
-Irec = 255*ones(nr,nc);
+Irec = zeros(nr,nc);
 
 [mx,my] = meshgrid(1:nc, 1:nr);
 px = reshape(mx',nc*nr,1);
@@ -69,10 +69,7 @@ py2 = f(2)*xd(2,:)+c(2);
 % Interpolate between the closest pixels:
 
 px_0 = floor(px2);
-
-
 py_0 = floor(py2);
-py_1 = py_0 + 1;
 
 
 good_points = find((px_0 >= 0) & (px_0 <= (nc-2)) & (py_0 >= 0) & (py_0 <= (nr-2)));
