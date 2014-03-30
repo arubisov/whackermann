@@ -18,7 +18,7 @@ PARAMS.IMAGE_CORRECTION_FACTOR = 0;
 % Too high? -> Less accurate result!
 % Too low? -> Slow computation.
 % Should be an int > 0.
-PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 103;
+PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 137;
 
 % Too high? -> Obstacles can be considered ground.
 % Too low? -> Fit more vulnerable to noise.
