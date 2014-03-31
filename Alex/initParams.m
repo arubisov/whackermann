@@ -1,8 +1,8 @@
 % Defines the constants used
 
 PARAMS.PYLON_O = [0 0];
-PARAMS.PYLON_X = [1 0];
-PARAMS.PYLON_Y = [0 1];
+PARAMS.PYLON_X = [.5 0];
+PARAMS.PYLON_Y = [0 .5];
 
 if exist('3Dax.mat','file'), delete('3Dax.mat'); end
 
@@ -10,7 +10,8 @@ PARAMS.VERT_RGB_FOV = 43.5 / 360 * 2 * pi; % 43.5 degrees
 PARAMS.HORIZ_RGB_FOV = 57.5 / 360 * 2 * pi; % 57.5 degrees
 
 % Estimated Kinect sensor angle
-PARAMS.SENSOR_ANGLE_DEG = 15; % 15 degrees downward
+% Better too little than too much!
+PARAMS.SENSOR_ANGLE_DEG = 10; % 10 degrees downward
 
 % Factor for correcting the image (arbitrary, increases focal length)
 PARAMS.IMAGE_CORRECTION_FACTOR = 0;
@@ -26,9 +27,9 @@ PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 137;
 PARAMS.GROUND_PLANE_POINT_THRESHOLD = 800;
 
 % Occupancy grid parameters
-PARAMS.XY_RESOLUTION = 5/100; % 5 cm
+PARAMS.XY_RESOLUTION = 2.5/100; % 5 cm
 PARAMS.ROBOT_HEIGHT = 20/100; % 20 cm
-PARAMS.GROUND_HEIGHT = 5/100; % 5 cm
+PARAMS.GROUND_HEIGHT = 10/100; % 10 cm
 
 % Robot Physical Parameters
 PARAMS.ROBOT_L = 17/100;                % Wheelbase (length) of robot = 17cm

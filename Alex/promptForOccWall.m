@@ -27,7 +27,7 @@ N = MN(:,2);
 % end
 [X,Y] = privateRGBToWorld(M,N,n,v,size_m,size_n,Oax,Xax,Yax,PARAMS);
 
-% Readjust Occupancy Grid
+%% Readjust Occupancy Grid
 XY_RESOLUTION = PARAMS.XY_RESOLUTION;
 dom = [[floor(min(X)/XY_RESOLUTION) ceil(max(X)/XY_RESOLUTION)] * XY_RESOLUTION  ;
         min(gr_x)                   max(gr_x)                                   ];
@@ -40,7 +40,7 @@ new_rng = [min(rng(:,1)) max(rng(:,2))];
 gr_x = new_dom(1):XY_RESOLUTION:new_dom(2);
 gr_y = new_rng(1):XY_RESOLUTION:new_rng(2);
 
-newOcc = uint16(zeros(length(gr_y)-1,length(gr_x)-1));
+newOcc = uint16(zeros(length(gr_y)+1,length(gr_x)+1));
 newKnown = newOcc;
 
 [o_m,o_n] = size(Occ);
@@ -49,6 +49,8 @@ Occ_y = (rng(2,1) - min(gr_y))/XY_RESOLUTION + 1;
 
 newOcc( Occ_x:(o_m+Occ_x-1), Occ_y:(o_n+Occ_y-1) ) = Occ;
 newKnown( Occ_x:(o_m+Occ_x-1), Occ_y:(o_n+Occ_y-1) ) = Known;
+
+%% Insert
 
 x = floor( (X - new_dom(1)) / XY_RESOLUTION ) + 1;
 y = floor( (Y - new_rng(1)) / XY_RESOLUTION ) + 1;

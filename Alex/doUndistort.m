@@ -14,9 +14,9 @@ KK = [fc(1) alpha_c*fc(1) cc(1);0 fc(2) cc(2) ; 0 0 1];
 rgb = double(rgb);
 depth = double(depth);
 
-[rgb1] = rect(rgb(:,:,1),eye(3),fc,cc,kc,alpha_c,KK);
-[rgb2] = rect(rgb(:,:,2),eye(3),fc,cc,kc,alpha_c,KK);
-[rgb3] = rect(rgb(:,:,3),eye(3),fc,cc,kc,alpha_c,KK);
+[rgb1] = privateRectNoInterp(rgb(:,:,1),eye(3),fc,cc,kc,alpha_c,KK);
+[rgb2] = privateRectNoInterp(rgb(:,:,2),eye(3),fc,cc,kc,alpha_c,KK);
+[rgb3] = privateRectNoInterp(rgb(:,:,3),eye(3),fc,cc,kc,alpha_c,KK);
 
 rgb = uint8(cat(3,rgb1,rgb2,rgb3));
 

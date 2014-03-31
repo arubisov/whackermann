@@ -1,7 +1,9 @@
 function [newOcc,newKnown,new_gr_x,new_gr_y] = sumOcc(Occ1,Known1,gr_x1,gr_y1,Occ2,Known2,gr_x2,gr_y2,PARAMS)
 
-% Readjust Occupancy Grid Bounds
+%% Readjust Occupancy Grid Bounds
+
 XY_RESOLUTION = PARAMS.XY_RESOLUTION;
+
 dom = [ min(gr_x1) max(gr_x1)  ;
         min(gr_x2) max(gr_x2) ];
 rng = [ min(gr_y1) max(gr_y1);
@@ -15,6 +17,8 @@ new_gr_y = new_rng(1):XY_RESOLUTION:new_rng(2);
 
 newOcc = uint16(zeros(length(new_gr_y)+1,length(new_gr_x)+1));
 newKnown = newOcc;
+
+%% Do the sum
 
 Occ1_x = uint16((dom(1,1) - min(new_gr_x))/XY_RESOLUTION + 1);
 Occ1_y = uint16((rng(1,1) - min(new_gr_y))/XY_RESOLUTION + 1);

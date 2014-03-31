@@ -47,13 +47,13 @@ py_0 = py_0(good_points);
 % a3 = alpha_y .* (1 - alpha_x)
 % a4 = alpha_y .* alpha_x
 
-ind_lu = px_0 * nr + py_0 + 1;
+% ind_lu = px_0 * nr + py_0 + 1;
 % ind_ru = (px_0 + 1) * nr + py_0 + 1;
 % ind_ld = px_0 * nr + (py_0 + 1) + 1;
-% ind_rd = (px_0 + 1) * nr + (py_0 + 1) + 1;
+ind_rd = (px_0 + 1) * nr + (py_0 + 1) + 1;
 
 ind_new = (px(good_points)-1)*nr + py(good_points);
 
-Irec(ind_new) = I(ind_lu);
+Irec(ind_new) = I(ind_rd);
 
 % Irec(ind_new) = a1 .* I(ind_lu) + a2 .* I(ind_ru) + a3 .* I(ind_ld) + a4 .* I(ind_rd);
