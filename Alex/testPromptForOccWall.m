@@ -14,14 +14,13 @@ initParams;
 [BinOcc] = getBinaryOccupancyGrid(Occ,Known);
 
 figure
-
 subplot(2,2,1)
-k = 137;
-scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
+imagesc(gr_x,gr_y,(BinOcc > 0.9999) - (Known == 0))
+set(gca,'YDir','normal')
+axis image
 xlabel('X')
 ylabel('Y')
-zlabel('Z')
-axis equal
+title('p = 0.9999 Occupancy Grid')
 
 subplot(2,2,2)
 imshow(rgb)

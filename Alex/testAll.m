@@ -4,4 +4,5 @@ testGroundPoints
 testWorldFrame
 testWorldPointMap
 testOccupancyGrid
-testDiskCentres
+testMeasure
+testPromptForOccWall
