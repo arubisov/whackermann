@@ -18,7 +18,7 @@
   *   in the Simulink Coder User's Manual in the Chapter titled,
   *   "Wrapper S-functions".
   *
-  *   Created: Mon Mar 24 19:31:09 2014
+  *   Created: Mon Mar 31 15:32:30 2014
   */
 
 
@@ -35,6 +35,7 @@
 
 /* %%%-SFUNWIZ_wrapper_includes_Changes_BEGIN --- EDIT HERE TO _END */
 #include <math.h>
+// #include "mex.h"
 /* %%%-SFUNWIZ_wrapper_includes_Changes_END --- EDIT HERE TO _BEGIN */
 #define u_width 4
 #define y_width 1
@@ -67,6 +68,7 @@ int    direction;       /* travelling direction, 1 for forward, -1 for backward 
 double theta;           /* orientation of vehicle */
 double theta_path;      /* orientation of nearest path point */ 
 double theta_err;       /* orientation error */
+double new_steer_angle; /* new steering angle */
 double cte;             /* cross-track error */
 double k;               /* gain parameter for steering control law */
 
@@ -97,6 +99,10 @@ if (exec_path[0] == 0 || xD[2] == 1) {
     }
 
     /* execute the FUCK out of this path. */
+//     mexPrintf("PATH_FOL: from_node=[%.2f,%.2f,%.2f,%.2f,%.2f,%.2f]\n", from_node[0], from_node[1], from_node[2], from_node[3], from_node[4], from_node[5]);  
+//     mexPrintf("PATH_FOL: to_node=[%.2f %.2f %.2f %.2f %.2f %.2f]\n", to_node[0], to_node[1], to_node[2], to_node[3], to_node[4], to_node[5]);
+//     mexPrintf("PATH_FOL: pose=[%.2f %.2f %.2f %.2f]\n", pose[0], pose[1], pose[2], pose[3]);
+    
 
     /* set drive speed */
     direction = (to_node[3] > 0) ? 1 : -1;
@@ -158,7 +164,9 @@ if (exec_path[0] == 0 || xD[2] == 1) {
          * To get path orientation, instead of actually determining the
          * nearest point, simply get the angle between two vectors: 
          * vector between centre and from_node, and between centre and 
-         * current pose.
+         * current pose. Since we're assumed to be travelling at a fixed
+         * steering angle we can assume that the path orientation at the
+         * nearest point is just the initial orientation plus that angle.
          *
          * To get the cross-track error, since we're travelling in a 
          * circle of fixed radius, the CTE to the nearest point is just
@@ -177,10 +185,12 @@ if (exec_path[0] == 0 || xD[2] == 1) {
         v_to[0] = pose[0]-CX;
         v_to[1] = pose[1]-CY;
 
-        angle = fmod(atan2(v_from[0]*v_to[1]-v_to[0]*v_from[1],v_from[0]*v_to[0]+v_from[1]*v_to[1]),2*M_PI);
+        angle = fmod(atan2(v_from[0]*v_to[1]-v_to[0]*v_from[1],v_from[0]*v_to[0]+v_from[1]*v_to[1]),2.0*M_PI);
 
-        theta_path = fmod(from_node[2] + angle, 2*M_PI);
+        theta_path = fmod(from_node[2] + angle, 2.0*M_PI);
         cte = sqrt(v_to[0]*v_to[0] + v_to[1]*v_to[1]) - radius;
+        
+//         mexPrintf("PATH_FOL: beta=%.2f, radius=%.2f, CX=%.2f, CY=%.2f, angle=%.2f, theta_path=%.2f, cte=%.2f\n", beta, radius, CX, CY, angle, theta_path, cte );  
 
     } else {           
         /**************************************************************
@@ -195,14 +205,21 @@ if (exec_path[0] == 0 || xD[2] == 1) {
          * http://mathworld.wolfram.com/Point-LineDistance2-Dimensional.html
          *************************************************************/
         theta_path = from_node[2];
-        cte = ((to_node[0] - from_node[0])*(from_node[1] - pose[1]) - (from_node[0] - pose[0])*(to_node[1] - from_node[1])) / sqrt( (to_node[0]-from_node[0])*(to_node[0]-from_node[0]) + (to_node[1]-from_node[1])*(to_node[1]-from_node[1]) );
+        cte = ((to_node[0] - from_node[0])*(from_node[1] - pose[1]) - (from_node[0] - pose[0])*(to_node[1] - from_node[1])) / sqrt( pow(to_node[0]-from_node[0],2) + pow(to_node[1]-from_node[1],2) );
     }
 
     theta_err = theta - theta_path;
-    k = 5.0;
+    k = 100.0;
+    
+    /* flip the sign on the steering angle */
+//     new_steer_angle = - theta_err + atan(k * cte / drive_speed[0]);
+    new_steer_angle = phi + atan(k * cte / drive_speed[0]);
+    
+    if (new_steer_angle > 0) new_steer_angle = fmod(new_steer_angle + M_PI, 2.0*M_PI) - M_PI;
+    else new_steer_angle = fmod(new_steer_angle - M_PI, 2.0*M_PI) + M_PI;
 
-    steer_angle[0] = theta_err - atan(k * cte / drive_speed[0]);
-    //mexPrintf("PATH FOLLOWER: vel=%.2f, steer=%.2f\n", drive_speed[0], steer_angle[0]);    
+    steer_angle[0] = new_steer_angle;
+//     mexPrintf("PATH_FOL: vel=%.2f, steer=%.2f, cte=%.5f\n", drive_speed[0], steer_angle[0], cte);    
 }
 /* %%%-SFUNWIZ_wrapper_Outputs_Changes_END --- EDIT HERE TO _BEGIN */
 }
@@ -227,6 +244,11 @@ double to_node[6];      /* 1-dim C array */
 double dist_to;         /* distance to the target node */
 int    reached_path_end;  /* boolean: whether we've reached the path end */ 
 
+reached_path_end = xD[2];
+
+/* kill it here if we've finished the path. */
+if (reached_path_end == 1) return;
+
 if (exec_path[0] == 0) {
     /* reset internal states */
     xD[0] = 0;
@@ -244,29 +266,38 @@ for (i=0; i<6; i++) {
 }
 
 /* check that we haven't yet passed the destination waypoint */
-dist_to = sqrt( (to_node[0]-pose[0])*(to_node[0]-pose[0]) + (to_node[1]-pose[1])*(to_node[1]-pose[1]) );
+
+dist_to = sqrt( pow(to_node[0]-pose[0],2) + pow(to_node[1]-pose[1],2));
 
 if (dist_to > prev_dist_to) {
     path_ind = path_ind + 1;
     xD[0] = path_ind;      /* increment path index */
     xD[1] = 99999;          /* reset dist_to_next */
     
-    reached_path_end = 1;
-    /* check whether we've reached the end of the path */
-    for (i=0; i<6; i++) {
-        if (path[path_ind*6 + i] != 0) {
-            reached_path_end = 0;
-            break;
+    /* if we're NOT at the end of a path of length 20... */
+    if (path_ind != 19) {
+        /* check whether all that remains of the path is zeros */
+        reached_path_end = 1;
+        for (i=0; i<6; i++) {
+            if (path[(path_ind+1)*6 + i] != 0) {
+                reached_path_end = 0;
+                break;
+            }
         }
     }
     
     if (reached_path_end == 1 || path_ind == 19) {
         xD[2] = 1;
+//         mexPrintf("PATH_FOL_UPDT: ind=%d, reached terminal node.\n", path_ind);
+        return;
     }
     
+//     mexPrintf("PATH_FOL_UPDT: ind=%d, dist=%.2f, reached next node\n", path_ind, dist_to);   
     return;
 } else {
     xD[1] = dist_to;        /* overwrite dist_to_next */
+    
+//     mexPrintf("PATH_FOL_UPDT: ind=%d, dist=%.2f, update dist\n", path_ind, dist_to);    
     return;
 }
 /* %%%-SFUNWIZ_wrapper_Update_Changes_END --- EDIT HERE TO _BEGIN */
