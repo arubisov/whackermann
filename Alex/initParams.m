@@ -1,10 +1,13 @@
 % Defines the constants used
 
 PARAMS.PYLON_O = [0 0];
-PARAMS.PYLON_X = [.5 0];
-PARAMS.PYLON_Y = [0 .5];
+PARAMS.PYLON_X = [1 0];
+PARAMS.PYLON_Y = [0 1];
 
 if exist('3Dax.mat','file'), delete('3Dax.mat'); end
+
+PARAMS.SEARCH_DIAMETER = 50;
+PARAMS.ROBOT_HEIGHT_PX = 5;
 
 PARAMS.VERT_RGB_FOV = 43.5 / 360 * 2 * pi; % 43.5 degrees
 PARAMS.HORIZ_RGB_FOV = 57.5 / 360 * 2 * pi; % 57.5 degrees
@@ -27,7 +30,7 @@ PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 137;
 PARAMS.GROUND_PLANE_POINT_THRESHOLD = 800;
 
 % Occupancy grid parameters
-PARAMS.XY_RESOLUTION = 2.5/100; % 5 cm
+PARAMS.XY_RESOLUTION = 5/100; % 5 cm
 PARAMS.ROBOT_HEIGHT = 20/100; % 20 cm
 PARAMS.GROUND_HEIGHT = 10/100; % 10 cm
 

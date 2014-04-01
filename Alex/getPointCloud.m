@@ -52,7 +52,7 @@ sin_horiz_rad = ((1:n)-n/2)/focalLengthX;
 
 AllInd = 1:(m*n);
 ImLgc = depth ~= 0;
-ImInd = AllInd(ImLgc(:));
+ImInd = uint32(AllInd(ImLgc(:)));
 i = mod(ImInd-1,m)+1;
 j = floor((ImInd-1)/m)+1;
 % [i,j] = ind2sub([m n],DepthPosInd);

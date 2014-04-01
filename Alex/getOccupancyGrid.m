@@ -32,7 +32,7 @@ Known = Occ;
 %     end
 % end
 
-AllInd = 1:length(Z);
+AllInd = uint32(1:length(Z));
 OccLgc = GROUND_HEIGHT < Z & Z < ROBOT_HEIGHT;
 NonOccLgc = Z < GROUND_HEIGHT;
 OccInd = AllInd(OccLgc);
