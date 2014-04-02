@@ -9,6 +9,7 @@ classdef RRT3D < handle
         L                   % Length of the robot
         DRIVE_SPEED         % Robot driving speed (for steps in the path)
         MAX_STEER           % Maximum robot steering angle
+        STRT_LN_THRESH      % Threshold angle less than which movement is considered to be in a straight line.
         tree                % Array stores pose information of tree nodes (x,y,theta)
         parent              % Array stores relations of nodes
         children            % Number of children of each node
@@ -43,6 +44,7 @@ classdef RRT3D < handle
             rrt.L = params.ROBOT_L;
             rrt.DRIVE_SPEED = params.RRT_DRIVE_SPEED;
             rrt.MAX_STEER = params.MAX_STEER;
+            rrt.STRT_LN_THRESH = params.STRT_LN_THRESH;
             rrt.tree = zeros(6, params.RRT_MAX_NODES);
             rrt.parent = zeros(1, params.RRT_MAX_NODES);
             rrt.children = zeros(1, params.RRT_MAX_NODES);
@@ -78,15 +80,15 @@ classdef RRT3D < handle
         % its position.
         % ranges: [xmin xmax ymin ymax]
         function ranges = get_occ_robot_box(rrt, pose)
-            center = pose(1:2) + [cos(pose(3))/(0.5*rrt.L) sin(pose(3))/(0.5*rrt.L)];
+            center = pose(1:2) + [cos(pose(3))*0.5*rrt.L sin(pose(3))*0.5*rrt.L];
             center_ind = rrt.get_occ_ind(center);
             % ranges: each row: [xmin xmax ymin ymax]
-            fudge = 2;
+            fudge = 0;
             
-            ranges = [max(round(center_ind(1)-0.5*rrt.L/rrt.XY_RESOLUTION-fudge), 1), ...
-                      min(round(center_ind(1)+0.5*rrt.L/rrt.XY_RESOLUTION+fudge), size(rrt.occ_grid,1)), ...
-                      max(round(center_ind(2)-0.5*rrt.L/rrt.XY_RESOLUTION-fudge), 1), ...
-                      min(round(center_ind(2)+0.5*rrt.L/rrt.XY_RESOLUTION+fudge), size(rrt.occ_grid,2))]; 
+            ranges = [max(ceil(center_ind(1)-0.5*rrt.L/rrt.XY_RESOLUTION-fudge), 1), ...
+                      min(floor(center_ind(1)+0.5*rrt.L/rrt.XY_RESOLUTION+fudge), size(rrt.occ_grid,2)), ...
+                      max(ceil(center_ind(2)-0.5*rrt.L/rrt.XY_RESOLUTION-fudge), 1), ...
+                      min(floor(center_ind(2)+0.5*rrt.L/rrt.XY_RESOLUTION+fudge), size(rrt.occ_grid,1))]; 
         end
         
         
@@ -109,9 +111,10 @@ classdef RRT3D < handle
         
         % Antonized
         % Generate and return random (x,y) point in the environment.
-        function position = sample(rrt)
-            % pick the goal point with a 10% chance.
-            if rand(1,1) < 0.1
+        function position = sample(rrt, ind)
+            % pick the goal point with a 10% chance, or if it's the first
+            % time through.
+            if (ind == 1 || rand(1,1) < 0.1)
                 position = rrt.goal_point';
             else
                 position = [rrt.XY_BOUNDARY(1); rrt.XY_BOUNDARY(3)] + ...
@@ -124,13 +127,13 @@ classdef RRT3D < handle
         % distance, plus a weight on the rotation distance. 
         function node_index = nearest(rrt, new_node)
             % pick the start point with a 1% chance.
-            if rand(1,1) < 0.01
-                node_index = 1;
-            else
+%             if rand(1,1) < 0.01
+%                 node_index = 1;
+%             else
                 rrt.compare_table(1:(rrt.nodes_added)) = sum((rrt.tree(1:2, 1:(rrt.nodes_added)) - repmat(new_node(1:2),1,rrt.nodes_added)).^2);
                 [rrt.compare_table(1:(rrt.nodes_added)), rrt.index(1:(rrt.nodes_added))] = sort(rrt.compare_table(1:(rrt.nodes_added)));
                 node_index = rrt.index(1);
-            end
+%             end
         end
         
         % Antonized
@@ -155,21 +158,34 @@ classdef RRT3D < handle
             gamma = atan2(new_node(2) - curr_pose(2), new_node(1) - curr_pose(1));
             
             alpha = rrt.wrap_angle_to_pi(gamma - theta);    % angle b/w vehicle's heading vector and target vector, in range [-pi,pi]
-            d = norm(new_node - curr_pose(1:2));        % distance to target point
-            dist = alpha*d/sin(alpha);                  % distance traveled on the arc connection to target
-            steer = atan(2*rrt.L*sin(alpha)/d);         % steering angle
-            speed = rrt.DRIVE_SPEED;                    % driving speed
+            d = norm(new_node - curr_pose(1:2));            % distance to target point
+            speed = rrt.DRIVE_SPEED;                        % driving speed            
             
-            % if the target is behind the vehicle, with a 20% chance drive
-            % backward. otherwise still drive forward. if we're driving
-            % backward, change the distance to full circle minus that
-            % original distance.
-            if alpha < -pi/2 || alpha > pi/2
-                if rand(1,1) < 0.2
+            
+            if abs(alpha) > rrt.STRT_LN_THRESH && abs(alpha - pi) > rrt.STRT_LN_THRESH
+
+                dist = alpha*d/sin(alpha);                  % distance traveled on the arc connection to target
+                steer = atan(2*rrt.L*sin(alpha)/d);         % steering angle
+
+                % if the target is behind the vehicle, drive backward. if
+                % so, change the distance to full circle minus thats
+                % original distance.
+                if (alpha < -pi/2 || alpha > pi/2)
                     speed = -rrt.DRIVE_SPEED;
                     dist = 2*pi*abs(rrt.L/tan(steer)) - dist;
                 end
+            else
+                dist = d;
+                steer = 0;
+                speed = rrt.DRIVE_SPEED;
+                
+                if (alpha < -pi/2 || alpha > pi/2)
+                    speed = -rrt.DRIVE_SPEED;
+                    dist = -dist;
+                end
             end
+                
+
 
 %             fprintf('new_node: [%.2f %.2f] \n',new_node);
 %             fprintf('nearest_node: [%.2f %.2f %.2f] \n',curr_pose);
@@ -191,29 +207,52 @@ classdef RRT3D < handle
             pose = rrt.tree(:, nearest_node_ind);   % starting pose
             theta = pose(3);                        % starting orientation
             phi = inputs(2);                        % steering angle
-            %beta = inputs(3)*tan(phi)/rrt.L;        % turning angle
-            radius = rrt.L/tan(phi);                % turning radius
             
-            CX = pose(1) - sin(pose(3)) * radius;   % (CX,CY) is center of the turning circle                     
-            CY = pose(2) + cos(pose(3)) * radius;   % (CX,CY) is center of the turning circle
-             
-            % check for backward driving
-            sign = 1 - (inputs(1) < 0)*2;
+            % if we're turning, get the poses along the turning arc.
+            if phi ~= 0
+                radius = rrt.L/tan(phi);            % turning radius
             
-            steps = abs(floor(inputs(3)));          % number of steps over which to check validity = distance traveled
-            poses = zeros(steps,3);
-            
-            if (steps == 0)
-                %fprintf('Number of pose steps is zero....\n');
-                valid = false;
-                return;
-            end
-            
-            for i = 1:steps
-                beta = (i/steps)*inputs(3)/radius;  % turning angle
-                poses(i, 1) = CX + sin(theta + sign*beta)*radius;
-                poses(i, 2) = CY - cos(theta + sign*beta)*radius;
-                poses(i, 3) = mod(theta + sign*beta, 2*pi);
+                CX = pose(1) - sin(theta) * radius;   % (CX,CY) is center of the turning circle                     
+                CY = pose(2) + cos(theta) * radius;   % (CX,CY) is center of the turning circle
+
+                % check for backward driving
+                sign = 1 - (inputs(1) < 0)*2;
+
+                steps = abs(ceil(inputs(3)/0.05));          % number of steps over which to check validity = every 5cm of distance travelled
+
+                if (steps == 0)
+                    %fprintf('Number of pose steps is zero....\n');
+                    valid = false;
+                    return;
+                end
+                
+                poses = zeros(steps,3);
+
+                for i = 1:steps
+                    beta = (i/steps)*inputs(3)/radius;  % turning angle
+                    poses(i, 1) = CX + sin(theta + sign*beta)*radius;
+                    poses(i, 2) = CY - cos(theta + sign*beta)*radius;
+                    poses(i, 3) = mod(theta + sign*beta, 2*pi);
+                end
+                
+            % otherwise we're driving straight. easier.    
+            else
+                steps = abs(ceil(inputs(3)/0.05));          % number of steps over which to check validity = every 5cm of distance travelled
+                
+                if (steps == 0)
+                    %fprintf('Number of pose steps is zero....\n');
+                    valid = false;
+                    return;
+                end
+                
+                poses = zeros(steps,3);
+                
+                for i = 1:steps
+                    dist = (i/steps)*inputs(3);             % driving distance
+                    poses(i, 1) = pose(1) + dist*cos(theta);
+                    poses(i, 2) = pose(2) + dist*sin(theta);
+                    poses(i, 3) = theta;
+                end
             end
                       
             final_node = poses(end,:);
@@ -231,7 +270,7 @@ classdef RRT3D < handle
             % collision detection by checking a box of size L^2 around the
             % center of the robot.
             % poses: each unique vehicle poses (avoid double-checking)
-            poses = unique(round(poses), 'rows');
+            poses = unique(round(poses*10)/10, 'rows');
             % centers: centre of the vehicle at each of the unique poses
 %             centers = poses(:, 1:2) + [cos(poses(:,3))/(0.5*rrt.L) sin(poses(:,3))/(0.5*rrt.L)];
 %             % ranges: each row: [xmin xmax ymin ymax]

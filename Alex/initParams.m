@@ -46,13 +46,14 @@ PARAMS.MAX_STEER = ...                  % Maximum steering angle
 
 % RRT* path planning parameters
 PARAMS.RRT_RAND_SEED = 1;                   % Seed for random number generator.
-PARAMS.RRT_MAX_ITER  = 5000;                % Max number of iterations
+PARAMS.RRT_MAX_ITER  = 10000;               % Max number of iterations
 PARAMS.RRT_MAX_NODES = 4000;                % Max number of nodes to store.
 PARAMS.RRT_DRIVE_SPEED = 5;                 % Assumed driving speed for path planning.
 PARAMS.RRT_DELTA_GOAL_POINT = 0.05;         % Radius of goal position region in metres
 PARAMS.RRT_DELTA_NEAR = 1;                  % Radius for neighboring nodes in metres
 PARAMS.RRT_MAX_WAYPOINTS = 20;              % Maximum number of waypoints that get fed to the path follower.
 PARAMS.RRT_OCC_CONF = 0.99;                 % Confidence to use for the occupancy grid.
+PARAMS.STRT_LN_THRESH = 0.0001;             % Threshold angle less than which movement is considered to be in a straight line.
 
 % Driving Simulink Model parameters
 PARAMS.ROBOT_INIT_POSE = [0 0 0];

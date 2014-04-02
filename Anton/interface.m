@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 30-Mar-2014 16:13:44
+% Last Modified by GUIDE v2.5 01-Apr-2014 14:04:27
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -446,6 +446,7 @@ function push_beep_Callback(hObject, eventdata, handles)
 set_param('driver/Beeper/trigger','Value','1');
 pause(0.5);  % pause for 1000ms
 set_param('driver/Beeper/trigger','Value','0');
+set(handles.txt_circle_detected,'String','NO');
 
 
 function txt_goal_Callback(hObject, eventdata, handles)
@@ -562,17 +563,13 @@ function push_setrobottheta_Callback(hObject, eventdata, handles)
 % hObject    handle to push_setrobottheta (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-pose = get(handles.txt_robot_pose,'String');
-pose = pose(2:end-1);
-pose = regexp(pose, ',', 'split');
 
-prompt = {'Override robot x:', 'Override robot y:', 'Override robot orientation:'};
-dlg_title = 'Input';
-num_lines = 1;
-answer = inputdlg(prompt,dlg_title,num_lines,pose);
+x = get(handles.txt_override_x, 'String');
+y = get(handles.txt_override_y, 'String');
+theta = get(handles.txt_override_theta, 'String');
 
 % pass new coordinates back to Simulink model
-set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%s,%s,%s]', answer{1}, answer{2}, answer{3}));
+set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%s,%s,%s]', x, y, theta));
 
 curr_reset = str2double(get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value'));
 
@@ -614,9 +611,13 @@ function push_refresh_pose_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 %create a run time object that can return the value of the block's
 %output and then put the value in a string.
-rto = get_param('driver/Dead Reckoning/Bicycle Model/Pose Integrator','RuntimeObject');
+rto = get_param('driver/Dead Reckoning/Bicycle Model/Discrete-Time Integrator','RuntimeObject');
 pose = sprintf('[%.2f,%.2f,%.2f]',rto.OutputPort(1).Data(1), rto.OutputPort(1).Data(2), rto.OutputPort(1).Data(3));
 set(handles.txt_robot_pose,'String',pose);
+set(handles.txt_override_x, 'String', sprintf('%.2f',rto.OutputPort(1).Data(1)));
+set(handles.txt_override_y, 'String', sprintf('%.2f',rto.OutputPort(1).Data(2)));
+set(handles.txt_override_theta, 'String', sprintf('%.2f',rto.OutputPort(1).Data(3)));
+
 
 
 % --- Executes on button press in push_rrt_load.
@@ -627,3 +628,98 @@ function push_rrt_load_Callback(hObject, eventdata, handles)
 handles.path = dlmread('pathplanner_path.txt');
 guidata(hObject, handles);
 plotPathOnOcc(handles, handles.path);
+
+
+% --- Executes on button press in push_check_black_circle.
+function push_check_black_circle_Callback(hObject, eventdata, handles)
+% hObject    handle to push_check_black_circle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%create a run time object that can return the value of the block's
+%output and then put the value in a string.
+rto = get_param('driver/Color Detector/detector','RuntimeObject');
+str = num2str(rto.OutputPort(1).Data);
+
+%update the gui
+set(handles.txt_circle_detected,'String',str);
+
+
+
+function txt_override_x_Callback(hObject, eventdata, handles)
+% hObject    handle to txt_override_x (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txt_override_x as text
+%        str2double(get(hObject,'String')) returns contents of txt_override_x as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function txt_override_x_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txt_override_x (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function txt_override_y_Callback(hObject, eventdata, handles)
+% hObject    handle to txt_override_y (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txt_override_y as text
+%        str2double(get(hObject,'String')) returns contents of txt_override_y as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function txt_override_y_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txt_override_y (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function txt_override_theta_Callback(hObject, eventdata, handles)
+% hObject    handle to txt_override_theta (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of txt_override_theta as text
+%        str2double(get(hObject,'String')) returns contents of txt_override_theta as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function txt_override_theta_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txt_override_theta (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in push_reset_PID_steering.
+function push_reset_PID_steering_Callback(hObject, eventdata, handles)
+% hObject    handle to push_reset_PID_steering (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+curr_reset = str2double(get_param('driver/Path Follower/reset PID','Value'));
+
+if curr_reset == 1, set_param('driver/Path Follower/reset PID','Value','-1');
+else set_param('driver/Path Follower/reset PID','Value','1'); end
