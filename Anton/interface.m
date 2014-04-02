@@ -74,6 +74,7 @@ handles.reset_robot_xy = false;
 handles.drawObsOnGrid = false;
 handles.draw_pt1 = [];
 handles.draw_flag = 0;
+
 guidata(hObject,handles);
 
 loadOccGrids(hObject, eventdata, handles);
@@ -82,6 +83,12 @@ binary_cmap = [1 1 1; 0 0 0];
 colormap([binary_cmap; binary_cmap]);
 
 updateCameraView(hObject, eventdata, handles);
+
+handles.timer = timer(...
+    'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
+    'Period', 1, ...                    % Initial period is 1 sec.
+    'TimerFcn', {@refreshKinect,hObject}); % Specify callback
+start(handles.timer);
 
 
 
@@ -324,6 +331,24 @@ t = linspace(a,b);
 x = r*cos(t) + h;
 y = r*sin(t) + k;
 plot(x,y,color, 'LineWidth', 2);
+
+function startKinect(hObject, eventdata, handles)
+handles.context = privateKinectInit();
+guidata(hObject, handles);
+
+function refreshKinect(hObject, eventdata, hfigure)
+handles = guidata(hfigure);
+fprintf('refreshing kinect\n');
+if ~isempty(handles.context)
+    fprintf('attempting to refresh\n');
+    [handles.rgb, ~] = privateKinectGrab(handles.context);
+    guidata(hObject, handles);
+    
+    updateCameraView(hObject, eventdata, handles);
+end
+
+function endKinect(hObject, handles)
+privateKinectStop(handles.context)
 
 
 function updateCameraView(hObject, eventdata, handles)
