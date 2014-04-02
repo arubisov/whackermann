@@ -12,4 +12,4 @@ context = [];
 
 context = privateKinectInit();
 [rgb, depth] = privateKinectGrab(context);
-privateKinectStop(context);
+% privateKinectStop(context);
