@@ -71,6 +71,9 @@ handles.rgb = rgb;
 handles.PARAMS = PARAMS;
 handles.path = zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS);
 handles.reset_robot_xy = false;
+handles.drawObsOnGrid = false;
+handles.draw_pt1 = [];
+handles.draw_flag = 0;
 guidata(hObject,handles);
 
 loadOccGrids(hObject, eventdata, handles);
@@ -125,7 +128,32 @@ elseif (handles.reset_robot_xy)
     if curr_reset == 1, set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','-1');
     else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1'); end;
     push_refresh_pose_Callback(hObject, eventdata, handles);
+    
+elseif handles.drawObsOnGrid && isempty(handles.draw_pt1)
+    handles.draw_pt1 = [point(1,1) point(1,2)];
+    guidata(hObject,handles);
+    
+    redrawOccBinary(hObject, eventdata, handles);
+    
+elseif handles.drawObsOnGrid && ~isempty(handles.draw_pt1)
+    % TODO: draw lines on the Occ grid. 
+    pt2 = [point(1,1) point(1,2)];
+    [handles.Occ,handles.Known,handles.gr_x,handles.gr_y] = drawOccWall( ...
+        handles.n,handles.v, handles.Oax,handles.Xax,handles.Yax,handles.rgb, ...
+        handles.gr_x,handles.gr_y, handles.Occ,handles.Known,handles.PARAMS, ...
+        handles.draw_flag,handles.draw_pt1,pt2);
+
+    [handles.BinOcc] = getBinaryOccupancyGrid(handles.Occ,handles.Known);
+
+    handles.PARAMS.gr_x = handles.gr_x;
+    handles.PARAMS.gr_y = handles.gr_y;
+    handles.drawObsOnGrid = false;
+    handles.draw_pt1 = [];
+    guidata(hObject,handles);
+    
+    redrawOccBinary(hObject, eventdata, handles);
 else
+    
     set(handles.txt_goal,'String',sprintf('%.2f,%.2f',Dx, Dy));
 end
 
@@ -137,18 +165,13 @@ function axes_occ_binary_ButtonDownFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
  
-% % Get default command line output from handles structure
+% Get default command line output from handles structure
 % point = get(handles.axes_occ_binary,'CurrentPoint');    % button down detected
-% point = round(point(1,1:2));                            % extract x and y
-% 
-% x1 = max(1, point(1));
-% y1 = max(1, point(2));
-% 
-% %handles.world(y1:y1, x1:x1) = 1;
-% set(handles.txt_goal,'String',sprintf('%d,%d',x1, y1));
-% guidata(hObject,handles);
 
-% TODO: draw lines on the Occ grid. 
+
+    
+
+
 
 
 % --- Outputs from this function are returned to the command line.
@@ -177,7 +200,7 @@ varargout{1} = handles.output;
 % handles.world(y_f, x_f) = 3;
 % 
 % %fprintf('Click detected at x: %d, y: %d\n', x1, y1)
-% updateOccBinary(hObject, eventdata, handles);
+% redrawOccBinary(hObject, eventdata, handles);
 % %guidata(hObject,handles);  % commit target position to guidata
 % 
 % path = Astar(handles.world, [0 0], [y_f x_f]);
@@ -187,18 +210,22 @@ varargout{1} = handles.output;
 % for i=len:-1:2
 %     handles.world(path(i,1), path(i,2)) = 2;
 % end
-% updateOccBinary(hObject, eventdata, handles);
+% redrawOccBinary(hObject, eventdata, handles);
 
 
-function updateOccBinary(hObject, eventdata, handles)
+function redrawOccBinary(hObject, eventdata, handles)
 % Helper function for ploting the selected plot type
 
-%set(handles.axes_occ_binary, 'Tag', 'axes_occ_binary');
-%set(handles.axes_occ_binary, 'XLim', [0,101], 'YLim', [0,101]);
+subplot(handles.axes_occ_binary);
+imagesc(handles.gr_x, handles.gr_y, (handles.BinOcc > handles.PARAMS.RRT_OCC_CONF));
+set(handles.axes_occ_binary,'YDir','normal')
+axis image
 set(handles.axes_occ_binary, 'ButtonDownFcn', {@axes_occ_binary_ButtonDownFcn, handles});
-%set(handles.axes_occ_binary, 'Ydir', 'normal');
-%grid(handles.axes_occ_binary, 'on');
 set(findobj(gca,'type','image'),'hittest','off')
+
+%set(handles.axes_occ_binary, 'Tag', 'axes_occ_binary');
+%grid(handles.axes_occ_binary, 'on');
+
 
 
 function loadOccGrids(hObject, eventdata, handles)
@@ -210,8 +237,9 @@ function loadOccGrids(hObject, eventdata, handles)
 [Occ,Known,gr_x,gr_y] = getOccupancyGrid(X,Y,Z,handles.PARAMS);
 [BinOcc] = getBinaryOccupancyGrid(Occ,Known);
 
-handles.occ_binary = BinOcc;
-handles.occ_conf = Known;
+handles.Occ = Occ;
+handles.BinOcc = BinOcc;
+handles.Known = Known;
 handles.X = X;
 handles.Y = Y;
 handles.Z = Z;
@@ -227,14 +255,7 @@ handles.PARAMS.gr_x = gr_x;
 handles.PARAMS.gr_y = gr_y;
 guidata(hObject,handles);
 
-subplot(handles.axes_occ_binary);
-% imagesc(gr_x, gr_y, Occ);
-imagesc(gr_x, gr_y, (handles.occ_binary > handles.PARAMS.RRT_OCC_CONF));
-set(gca,'YDir','normal')
-axis image
-% xlabel('X')
-% ylabel('Y')
-updateOccBinary(hObject, eventdata, handles)
+redrawOccBinary(hObject, eventdata, handles)
 
 Grid = single(Occ)./single(Known);
 Grid(isnan(Grid)) = -1;
@@ -333,7 +354,7 @@ start = start(2:end-1);
 start = regexp(start, ',', 'split');
 start = cellfun(@str2num,start);
 
-dlmwrite('pathplanner_occ_grid.txt', handles.occ_binary);
+dlmwrite('pathplanner_occ_grid.txt', handles.BinOcc);
 dlmwrite('pathplanner_gr_x.txt', handles.gr_x);
 dlmwrite('pathplanner_gr_y.txt', handles.gr_y);
 dlmwrite('pathplanner_start.txt', start);
@@ -352,12 +373,7 @@ guidata(hObject, handles);
 set_param('driver/Path Follower/Exec Path','Value','0');
 set_param('driver/Path Follower/path','Value',mat2str(handles.path));
 
-subplot(handles.axes_occ_binary);
-imagesc(handles.gr_x, handles.gr_y, (handles.occ_binary > handles.PARAMS.RRT_OCC_CONF));
-set(gca,'YDir','normal')
-axis image
-
-updateOccBinary(hObject, eventdata, handles)
+redrawOccBinary(hObject, eventdata, handles)
 
 
 % --- Executes on button press in toggle_manual_drive.
@@ -524,6 +540,18 @@ if get(handles.toggle_manual_drive,'Value') == 1
        % stop everything
        push_stop_Callback(hObject, eventdata, handles);
    end
+else
+    if strcmp(eventdata.Key, 'd')
+        handles.drawObsOnGrid = true;
+        handles.draw_flag = 1;
+        guidata(hObject,handles);
+    elseif strcmp(eventdata.Key, 'a')
+        handles.draw_flag = 1;
+        guidata(hObject,handles);
+    elseif strcmp(eventdata.Key, 'c')
+        handles.draw_flag = 0;
+        guidata(hObject,handles);
+    end
 end
 
 
