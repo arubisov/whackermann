@@ -16,19 +16,22 @@ try
     [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
     
     % Use more than 1 iteration to stabilize the ground plane
+    X2 = X;
+    Y2 = Y;
+    Z2 = Z;
     for i = 1:20, % Set to 20 when not using static frames
         if i == 5, PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 23; end
         if i == 10, PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 1; end % Improves results
-        
-        [n,v] = getGroundPlane(X,Y,Z,PARAMS);
-        if i ~= 1, n = privateRotateFromTo(old_n,n)*n; end
+
+        [n,v] = getGroundPlane(X2,Y2,Z2,PARAMS);
+        [X2,Y2,Z2] = privateRotateAboutVFromTo(X2,Y2,Z2,n,v);
+        if i ~= 1,
+            n = privateRotateFromTo(old_n,n)*n;
+        end
         old_n = n;
-        [X,Y,Z] = privateRotateAboutVFromTo(X,Y,Z,n,v);
-        X = X';
-        Y = Y';
-        Z = Z';
     end
-    
+    [~,v] = getGroundPlane(X,Y,Z,PARAMS);
+    clear X2 Y2 Z2
     %% INIT Occupancy Grid Data
     
     % World (rgb to m, depth to m) transformation data
@@ -37,7 +40,6 @@ try
     [sOcc,sKnown,sgr_x,sgr_y] = getOccupancyGrid(X,Y,Z,PARAMS);
     
     % Occupancy grid loop, accumulate data from multiple frames to generate map...
-    figure(1)
     for i = 1:10, % Set to 10 when not using static frames
         [rgb,depth] = privateKinectGrab(cx);
 %         initFrame;
