@@ -243,6 +243,7 @@ function loadOccGrids(hObject, eventdata, handles)
 [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax,handles.PARAMS);
 [Occ,Known,gr_x,gr_y] = getOccupancyGrid(X,Y,Z,handles.PARAMS);
 [BinOcc] = getBinaryOccupancyGrid(Occ,Known);
+[x,y,th,Im,In] = promptForRobotPosition(handles.rgb,n,v,Oax,Xax,Yax,handles.PARAMS);
 
 handles.Occ = Occ;
 handles.BinOcc = BinOcc;
@@ -260,6 +261,11 @@ handles.gr_x = gr_x;
 handles.gr_y = gr_y;
 handles.PARAMS.gr_x = gr_x;
 handles.PARAMS.gr_y = gr_y;
+handles.x = x;
+handles.y = y;
+handles.th = th;
+handles.Im = Im;
+handles.In = In;
 guidata(hObject,handles);
 
 redrawOccBinary(hObject, eventdata, handles)
@@ -332,23 +338,22 @@ x = r*cos(t) + h;
 y = r*sin(t) + k;
 plot(x,y,color, 'LineWidth', 2);
 
-function startKinect(hObject, eventdata, handles)
-handles.context = privateKinectInit();
-guidata(hObject, handles);
 
 function refreshKinect(hObject, eventdata, hfigure)
 handles = guidata(hfigure);
-fprintf('refreshing kinect\n');
+
 if ~isempty(handles.context)
-    fprintf('attempting to refresh\n');
-    [handles.rgb, ~] = privateKinectGrab(handles.context);
+    % update the Kinect image and update robot position.    
+    [handles.rgb, handles.depth] = privateKinectGrab(handles.context);
+    [handles.Im,handles.In,handles.x,handles.y,handles.th] = ...
+        privateUpdateRobotPosition(handles.Im,handles.In, ...
+        handles.x,handles.y,handles.th,handles.n,handles.v, ...
+        handles.Oax,handles.Xax,handles.Yax,handles.rgb,handles.PARAMS);
+    
     guidata(hObject, handles);
     
     updateCameraView(hObject, eventdata, handles);
 end
-
-function endKinect(hObject, handles)
-privateKinectStop(handles.context)
 
 
 function updateCameraView(hObject, eventdata, handles)
