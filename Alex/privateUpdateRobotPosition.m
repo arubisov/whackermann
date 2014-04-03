@@ -64,9 +64,10 @@ for pR = 1:Rn
         end
     end
 end
-
-new_m = double(round((min_Rc(2) + min_Bc(2)) / 2) + PARAMS.ROBOT_HEIGHT_PX); % Correction factor since we are looking at the top of the robot...
-new_n = double(round((min_Rc(1) + min_Bc(1)) / 2));
+new_m = min_Rc(2);
+new_n = min_Rc(1);
+% new_m = double(round((min_Rc(2) + min_Bc(2)) / 2) + PARAMS.ROBOT_HEIGHT_PX); % Correction factor since we are looking at the top of the robot...
+% new_n = double(round((min_Rc(1) + min_Bc(1)) / 2));
 
 [x,y] = privateRGBToWorld(new_m,new_n,n,v,size_m,size_n,Oax,Xax,Yax,PARAMS);
 
