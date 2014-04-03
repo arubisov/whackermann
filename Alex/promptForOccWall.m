@@ -1,4 +1,4 @@
-function [Occ,Known,gr_x,gr_y] = promptForOccWall(n,v,Oax,Xax,Yax,rgb,gr_x,gr_y,Occ,Known,PARAMS)
+function [Occ,Known,gr_x,gr_y] = promptForOccWall(n,v,Oax,Xax,Yax,rgb,gr_x1,gr_y1,Occ1,Known1,PARAMS)
 
 % Prompt for line
 h = figure('units','normalized','outerposition',[0 0 1 1]);
@@ -20,47 +20,33 @@ N = MN(:,2);
 % Transform RGB to world
 
 [size_m,size_n] = size(rgb(:,:,1));
-% X = zeros(length(MN),1);
-% Y = X;
-% for i = 1:length(X),
-%     [X(i),Y(i)] = privateRGBToWorld(M(i),N(i),n,v,size_m,size_n,Oax,Xax,Yax,PARAMS);
-% end
 [X,Y] = privateRGBToWorld(M,N,n,v,size_m,size_n,Oax,Xax,Yax,PARAMS);
 
 %% Readjust Occupancy Grid
+
 XY_RESOLUTION = PARAMS.XY_RESOLUTION;
-dom = [[floor(min(X)/XY_RESOLUTION) ceil(max(X)/XY_RESOLUTION)] * XY_RESOLUTION  ;
-        min(gr_x)                   max(gr_x)                                   ];
-rng = [[floor(min(Y)/XY_RESOLUTION) ceil(max(Y)/XY_RESOLUTION)] * XY_RESOLUTION  ;
-        min(gr_y)                   max(gr_y)                                   ];
 
-new_dom = [min(dom(:,1)) max(dom(:,2))];
-new_rng = [min(rng(:,1)) max(rng(:,2))];
+dom = [floor(min(X)/XY_RESOLUTION) ceil(max(X)/XY_RESOLUTION)] * XY_RESOLUTION;
+rng = [floor(min(Y)/XY_RESOLUTION) ceil(max(Y)/XY_RESOLUTION)] * XY_RESOLUTION;
 
-gr_x = new_dom(1):XY_RESOLUTION:new_dom(2);
-gr_y = new_rng(1):XY_RESOLUTION:new_rng(2);
+gr_x2 = dom(1):XY_RESOLUTION:dom(2);
+gr_y2 = rng(1):XY_RESOLUTION:rng(2);
 
-newOcc = uint16(zeros(length(gr_y)+1,length(gr_x)+1));
-newKnown = newOcc;
+Occ2 = uint16(zeros(length(gr_y2),length(gr_x2)));
+Known2 = Occ2;
 
-[o_m,o_n] = size(Occ);
-Occ_x = (dom(2,1) - min(gr_x))/XY_RESOLUTION + 1;
-Occ_y = (rng(2,1) - min(gr_y))/XY_RESOLUTION + 1;
+x = floor( (X - dom(1)) / XY_RESOLUTION ) + 1;
+y = floor( (Y - rng(1)) / XY_RESOLUTION ) + 1;
+s = sub2ind(size(Occ2),y,x);
 
-newOcc( Occ_x:(o_m+Occ_x-1), Occ_y:(o_n+Occ_y-1) ) = Occ;
-newKnown( Occ_x:(o_m+Occ_x-1), Occ_y:(o_n+Occ_y-1) ) = Known;
+Occ2(s) = 100;
+Known2(s) = 100;
 
-%% Insert
+% figure(3); imagesc(gr_x1,gr_y1,Occ1)
+% figure(4); imagesc(gr_x2,gr_y2,Occ2)
 
-x = floor( (X - new_dom(1)) / XY_RESOLUTION ) + 1;
-y = floor( (Y - new_rng(1)) / XY_RESOLUTION ) + 1;
-s = sub2ind(size(newOcc),y,x);
+[Occ,Known,gr_x,gr_y] = sumOcc(Occ1,Known1,gr_x1,gr_y1,Occ2,Known2,gr_x2,gr_y2,PARAMS);
 
-newOcc(s) = 100;
-newKnown(s) = 100;
-
-Occ = newOcc;
-Known = newKnown;
 
 end
 

@@ -13,7 +13,7 @@ initParams;
 
 [BinOcc] = getBinaryOccupancyGrid(Occ,Known);
 
-figure
+figure(1)
 subplot(2,2,1)
 imagesc(gr_x,gr_y,(BinOcc > 0.9999) - (Known == 0))
 set(gca,'YDir','normal')

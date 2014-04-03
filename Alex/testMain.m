@@ -5,13 +5,13 @@ clear; close all; clc;
 %% INIT Params
 
 initParams;
-cx = privateKinectInit;
+% cx = privateKinectInit;
 
 try
     %% INIT World Frame Data
     
-    [rgb,depth] = privateKinectGrab(cx);
-%     initFrame
+%     [rgb,depth] = privateKinectGrab(cx);
+    initFrame
     
     [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
     
@@ -40,9 +40,9 @@ try
     [sOcc,sKnown,sgr_x,sgr_y] = getOccupancyGrid(X,Y,Z,PARAMS);
     
     % Occupancy grid loop, accumulate data from multiple frames to generate map...
-    for i = 1:10, % Set to 10 when not using static frames
-        [rgb,depth] = privateKinectGrab(cx);
-%         initFrame;
+    for i = 1:5, % Set to 10 when not using static frames
+%         [rgb,depth] = privateKinectGrab(cx);
+        initFrame;
         
         [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
         [Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb,PARAMS); % Note: Does not prompt user, world axes already available
@@ -66,13 +66,13 @@ try
                 [BinOcc] = getBinaryOccupancyGrid(sOcc,sKnown);
                 in = 'foo';
             case 'manualrobotpos'
-                [rgb,depth] = privateKinectGrab(cx);
-%                 initFrame;
+%                 [rgb,depth] = privateKinectGrab(cx);
+                initFrame;
                 [x,y,th,Im,In] = promptForRobotPosition(rgb,n,v,Oax,Xax,Yax,PARAMS); % Note: Prompts user
                 in = 'foo';
             case 'autorobotpos'
-                [rgb,depth] = privateKinectGrab(cx);
-%                 initFrame;
+%                 [rgb,depth] = privateKinectGrab(cx);
+                initFrame;
                 [Im,In,x,y,th] = privateUpdateRobotPosition(Im,In,x,y,th,n,v,Oax,Xax,Yax,rgb,PARAMS);
                 in = 'foo';
             case 'measurepoint'

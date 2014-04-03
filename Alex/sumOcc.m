@@ -12,28 +12,49 @@ rng = [ min(gr_y1) max(gr_y1);
 new_dom = [min(dom(:,1)) max(dom(:,2))];
 new_rng = [min(rng(:,1)) max(rng(:,2))];
 
+% new_gr_x = linspace( new_dom(1), new_dom(2), (new_dom(2) - new_dom(1))/XY_RESOLUTION )
+% new_gr_y = linspace( new_rng(1), new_rng(2), (new_rng(2) - new_rng(1))/XY_RESOLUTION )
+
 new_gr_x = new_dom(1):XY_RESOLUTION:new_dom(2);
 new_gr_y = new_rng(1):XY_RESOLUTION:new_rng(2);
 
-newOcc = uint16(zeros(length(new_gr_y)+1,length(new_gr_x)+1));
+newOcc = uint16(zeros(length(new_gr_y),length(new_gr_x)));
 newKnown = newOcc;
 
 %% Do the sum
 
+
 Occ1_x = uint16((dom(1,1) - min(new_gr_x))/XY_RESOLUTION + 1);
 Occ1_y = uint16((rng(1,1) - min(new_gr_y))/XY_RESOLUTION + 1);
 
+% Occ1_x = uint16((dom(1,1) - min(new_gr_x))/XY_RESOLUTION + 1);
+% Occ1_y = uint16((rng(1,1) - min(new_gr_y))/XY_RESOLUTION + 1);
+
 [o1_m,o1_n] = size(Occ1);
-newOcc( Occ1_x:(o1_m+Occ1_x-1), Occ1_y:(o1_n+Occ1_y-1) ) = Occ1;
-newKnown( Occ1_x:(o1_m+Occ1_x-1), Occ1_y:(o1_n+Occ1_y-1) ) = Known1;
+newOcc( Occ1_y:(o1_m+Occ1_y-1), Occ1_x:(o1_n+Occ1_x-1) ) = Occ1;
+newKnown( Occ1_y:(o1_m+Occ1_y-1), Occ1_x:(o1_n+Occ1_x-1) ) = Known1;
 
 Occ2_x = uint16((dom(2,1) - min(new_gr_x))/XY_RESOLUTION + 1);
 Occ2_y = uint16((rng(2,1) - min(new_gr_y))/XY_RESOLUTION + 1);
 
 [o2_m,o2_n] = size(Occ2);
-newOcc( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) = ...
-newOcc( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) + Occ2;
+newOcc( Occ2_y:(o2_m+Occ2_y-1), Occ2_x:(o2_n+Occ2_x-1) ) = ...
+newOcc( Occ2_y:(o2_m+Occ2_y-1), Occ2_x:(o2_n+Occ2_x-1) ) + Occ2;
 
-newKnown( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) = ...
-newKnown( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) + Known2;
+newKnown( Occ2_y:(o2_m+Occ2_y-1), Occ2_x:(o2_n+Occ2_x-1) ) = ...
+newKnown( Occ2_y:(o2_m+Occ2_y-1), Occ2_x:(o2_n+Occ2_x-1) ) + Known2;
+
+% [o1_m,o1_n] = size(Occ1)
+% newOcc( Occ1_x:(o1_m+Occ1_x-1), Occ1_y:(o1_n+Occ1_y-1) ) = Occ1;
+% newKnown( Occ1_x:(o1_m+Occ1_x-1), Occ1_y:(o1_n+Occ1_y-1) ) = Known1;
+% 
+% Occ2_x = uint16((dom(2,1) - min(new_gr_x))/XY_RESOLUTION + 1)
+% Occ2_y = uint16((rng(2,1) - min(new_gr_y))/XY_RESOLUTION + 1)
+% 
+% [o2_m,o2_n] = size(Occ2)
+% newOcc( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) = ...
+% newOcc( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) + Occ2;
+% 
+% newKnown( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) = ...
+% newKnown( Occ2_x:(o2_m+Occ2_x-1), Occ2_y:(o2_n+Occ2_y-1) ) + Known2;
 
