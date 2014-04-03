@@ -32,7 +32,7 @@ try
     while isempty(in),
         
         [rgb,depth] = privateKinectGrab(cx);
-        [Im,In,x,y,th] = privateUpdateRobotPosition(Im,In,x,y,th,n,v,Oax,Xax,Yax,rgb,PARAMS);
+        [Im,In,x,y,th,upd] = privateUpdateRobotPosition(Im,In,x,y,th,n,v,Oax,Xax,Yax,rgb,PARAMS);
         
         scatter(x,y,'*','red')
         drawnow

@@ -1,4 +1,4 @@
-function [new_m,new_n,x,y,th] = privateUpdateRobotPosition(old_m,old_n,old_x,old_y,old_th,n,v,Oax,Xax,Yax,rgb,PARAMS)
+function [new_m,new_n,x,y,th,update] = privateUpdateRobotPosition(old_m,old_n,old_x,old_y,old_th,n,v,Oax,Xax,Yax,rgb,PARAMS)
 
 [size_m,size_n] = size(rgb(:,:,1));
 
@@ -50,6 +50,7 @@ if Bn == 0 || Rn == 0,
     th = old_th;
     new_m = old_m;
     new_n = old_n;
+    update = false;
     return
 end
 
@@ -71,6 +72,9 @@ new_n = double(min_Rc(1));
 
 [x,y] = privateRGBToWorld(new_m,new_n,n,v,size_m,size_n,Oax,Xax,Yax,PARAMS);
 
-th = atan2( (y - old_y), (x - old_x) );
+% th = atan2( (y - old_y), (x - old_x) );
+
+th = atan2( min_Bc(2) - min_Rc(2), min_Bc(1) - min_Rc(1) );
+update = true;
 % 
 % imagesc(RR - RB)
