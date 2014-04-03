@@ -1,5 +1,6 @@
 function [x,y,th,Im,In] = promptForRobotPosition(rgb,n,v,Oax,Xax,Yax,PARAMS)
 
+h = figure;
 imshow(rgb)
 title('Get Robot Position')
 [x,y] = ginput(1);
@@ -12,6 +13,8 @@ title('Get Robot Heading')
 if isempty(x), return; end
 Imth = round(y);
 Inth = round(x);
+
+close(h);
 
 [size_m,size_n] = size(rgb(:,:,1));
 

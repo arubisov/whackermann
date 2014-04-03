@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 01-Apr-2014 14:04:27
+% Last Modified by GUIDE v2.5 02-Apr-2014 16:15:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -82,13 +82,8 @@ binary_cmap = [1 1 1; 0 0 0];
 %handles.default_cmap
 colormap([binary_cmap; binary_cmap]);
 
-updateCameraView(hObject, eventdata, handles);
-
-handles.timer = timer(...
-    'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
-    'Period', 1, ...                    % Initial period is 1 sec.
-    'TimerFcn', {@refreshKinect,hObject}); % Specify callback
-start(handles.timer);
+% updateCameraView(hObject, eventdata, handles);
+% updateCameraView(handles);
 
 
 
@@ -279,6 +274,15 @@ axis image
 % xlabel('X')
 % ylabel('Y')
 
+axes(handles.axes_camera);
+camHandle = imshow(handles.rgb);
+set(camHandle, 'ButtonDownFcn', {@axes_camera_ButtonDownFcn});
+axis image;
+handles.camHandle = camHandle;
+
+guidata(hObject,handles);
+
+
 function plotPathOnOcc(handles, path)
 
 subplot(handles.axes_occ_binary);
@@ -341,27 +345,25 @@ plot(x,y,color, 'LineWidth', 2);
 
 function refreshKinect(hObject, eventdata, hfigure)
 handles = guidata(hfigure);
-
 if ~isempty(handles.context)
     % update the Kinect image and update robot position.    
-    [handles.rgb, handles.depth] = privateKinectGrab(handles.context);
-    [handles.Im,handles.In,handles.x,handles.y,handles.th] = ...
-        privateUpdateRobotPosition(handles.Im,handles.In, ...
-        handles.x,handles.y,handles.th,handles.n,handles.v, ...
-        handles.Oax,handles.Xax,handles.Yax,handles.rgb,handles.PARAMS);
-    
-    guidata(hObject, handles);
-    
-    updateCameraView(hObject, eventdata, handles);
+    try
+        [handles.rgb, handles.depth] = privateKinectGrab(handles.context);
+        [handles.Im,handles.In,handles.x,handles.y,handles.th] = ...
+            privateUpdateRobotPosition(handles.Im,handles.In, ...
+            handles.x,handles.y,handles.th,handles.n,handles.v, ...
+            handles.Oax,handles.Xax,handles.Yax,handles.rgb,handles.PARAMS);
+        guidata(hfigure, handles);
+        updateCameraView(handles);
+    catch
+        fprintf('streaming caught exception. terminating.\n');
+        privateKinectStop(handles.context);
+    end
 end
 
 
-function updateCameraView(hObject, eventdata, handles)
-subplot(handles.axes_camera);
-handle = imshow(handles.rgb);
-set(handle, 'ButtonDownFcn', {@axes_camera_ButtonDownFcn});
-axis image;
-%set(findobj(gca,'type','image'),'hittest','off')
+function updateCameraView(handles)
+set(handles.camHandle, 'CData',handles.rgb);
 
 
 % --- Executes on button press in push_RRT_send.
@@ -781,3 +783,43 @@ curr_reset = str2double(get_param('driver/Path Follower/reset PID','Value'));
 
 if curr_reset == 1, set_param('driver/Path Follower/reset PID','Value','-1');
 else set_param('driver/Path Follower/reset PID','Value','1'); end
+
+
+% --- Executes when user attempts to close figure1.
+function figure1_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to figure1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: delete(hObject) closes the figure
+if ~isempty(handles.context)
+   privateKinectStop(handles.context);
+end
+
+if strcmp(get(handles.timer, 'Running'), 'on')
+    stop(handles.timer);
+    delete(handles.timer)
+end
+
+delete(hObject);
+
+
+
+% --- Executes on button press in toggle_stream_kinect.
+function toggle_stream_kinect_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_stream_kinect (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of toggle_stream_kinect
+
+handles.timer = timer(...
+    'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
+    'Period', 10, ...                    % Initial period is 1 sec.
+    'TimerFcn', {@refreshKinect,hObject}); % Specify callback
+
+guidata(hObject,handles);
+
+start(handles.timer);
+
+set(hObject, 'Enable', 'off');
