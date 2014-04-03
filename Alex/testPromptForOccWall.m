@@ -8,14 +8,14 @@ initParams;
 [Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb,PARAMS);
 [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax,PARAMS);
 [Occ,Known,gr_x,gr_y] = getOccupancyGrid(X,Y,Z,PARAMS);
-
+while true
 [Occ,Known,gr_x,gr_y] = promptForOccWall(n,v,Oax,Xax,Yax,rgb,gr_x,gr_y,Occ,Known,PARAMS);
 
 [BinOcc] = getBinaryOccupancyGrid(Occ,Known);
 
-[Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
-[Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
-[Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
+% [Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
+% [Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
+% [Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
 
 figure(1)
 subplot(2,2,1)
@@ -80,3 +80,4 @@ xlabel('X')
 ylabel('Y')
 title('p = 0.9999 Occupancy Grid')
 colormap gray
+end
