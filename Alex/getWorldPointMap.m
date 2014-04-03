@@ -27,7 +27,7 @@ B = [B1     [0;0]          ;
      [0 0]  1 ];
 
 % Position origin at centre
-XYZ = (B\A\XYZ) - repmat([PARAMS.PYLON_O'; 0],1,length(X));
+XYZ = (B\A\XYZ) + repmat([PARAMS.PYLON_O'; 0],1,length(X));
 
 X = XYZ(1,:)';
 Y = XYZ(2,:)';

@@ -1,8 +1,8 @@
 % Defines the constants used
 
-PARAMS.PYLON_O = [0 0];
-PARAMS.PYLON_X = [1 0];
-PARAMS.PYLON_Y = [0 1];
+PARAMS.PYLON_O = [5 5];
+PARAMS.PYLON_X = [6 5];
+PARAMS.PYLON_Y = [5 6];
 
 if exist('3Dax.mat','file'), delete('3Dax.mat'); end
 
