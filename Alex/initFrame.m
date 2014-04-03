@@ -10,6 +10,6 @@ context = [];
 % [rgb,depth] = doUndistort(rgb,depth);
 % depth(depth > 6000) = uint16(0); % Remove 'unreliable' pixels.
 
-context = privateKinectInit();
-[rgb, depth] = privateKinectGrab(context);
-privateKinectStop(context);
+% context = privateKinectInit();
+% [rgb, depth] = privateKinectGrab(context);
+% privateKinectStop(context);

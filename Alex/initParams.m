@@ -4,7 +4,7 @@ PARAMS.PYLON_O = [0 0];
 PARAMS.PYLON_X = [1 0];
 PARAMS.PYLON_Y = [0 1];
 
-% if exist('3Dax.mat','file'), delete('3Dax.mat'); end
+if exist('3Dax.mat','file'), delete('3Dax.mat'); end
 
 PARAMS.SEARCH_DIAMETER = 50;
 PARAMS.ROBOT_HEIGHT_PX = 5;

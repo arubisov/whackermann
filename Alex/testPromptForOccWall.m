@@ -13,6 +13,10 @@ initParams;
 
 [BinOcc] = getBinaryOccupancyGrid(Occ,Known);
 
+[Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
+[Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
+[Occ,Known,BinOcc] = promptRemoveFromOcc(Occ,Known,BinOcc);
+
 figure(1)
 subplot(2,2,1)
 imagesc(gr_x,gr_y,(BinOcc > 0.9999) - (Known == 0))
