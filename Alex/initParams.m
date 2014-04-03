@@ -1,8 +1,8 @@
 % Defines the constants used
 
 PARAMS.PYLON_O = [0 0];
-PARAMS.PYLON_X = [1 0];
-PARAMS.PYLON_Y = [0 1];
+PARAMS.PYLON_X = [0.5 0];
+PARAMS.PYLON_Y = [0 0.5];
 
 if exist('3Dax.mat','file'), delete('3Dax.mat'); end
 
@@ -46,7 +46,7 @@ PARAMS.MAX_STEER = ...                  % Maximum steering angle
 
 % RRT* path planning parameters
 PARAMS.RRT_RAND_SEED = 1;                   % Seed for random number generator.
-PARAMS.RRT_MAX_ITER  = 10000;               % Max number of iterations
+PARAMS.RRT_MAX_ITER  = 5000;               % Max number of iterations
 PARAMS.RRT_MAX_NODES = 4000;                % Max number of nodes to store.
 PARAMS.RRT_DRIVE_SPEED = 5;                 % Assumed driving speed for path planning.
 PARAMS.RRT_DELTA_GOAL_POINT = 0.05;         % Radius of goal position region in metres

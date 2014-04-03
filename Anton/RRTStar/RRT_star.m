@@ -51,10 +51,10 @@ function path = RRT_star(map, start, goal, params)
         end
         	
 		% display progress each 100 iterations
-%         if(mod(ind, 100) == 0)
-% 			disp([num2str(ind) ' iterations ' num2str(problem.nodes_added-1) ' nodes in ' num2str(toc) ' rewired ' num2str(problem.num_rewired)]);
-%             %problem.print_tree(ind);
-%         end
+        if(mod(ind, 100) == 0)
+			disp([num2str(ind) ' iterations ' num2str(problem.nodes_added-1) ' nodes in ' num2str(toc) ' rewired ' num2str(problem.num_rewired)]);
+            %problem.print_tree(ind);
+        end
 
         if (new_node == goal')
             if valid
@@ -74,6 +74,6 @@ function path = RRT_star(map, start, goal, params)
  
     path = problem.return_path();
    
-    % problem.plot();
+%     problem.plot();
     
 end

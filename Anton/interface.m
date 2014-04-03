@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 02-Apr-2014 22:02:25
+% Last Modified by GUIDE v2.5 03-Apr-2014 03:51:45
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -83,7 +83,7 @@ if ~exist(filename, 'file')
     end
 end
 
-handles.sharedfile = memmapfile(filename, 'Writable', true, 'Format', 'uint8');
+handles.sharedfile = memmapfile(filename, 'Writable', true, 'Format', 'double');
 
 handles.timer = timer(...
     'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
@@ -272,9 +272,9 @@ function push_stop_Callback(hObject, eventdata, handles)
 % hObject    handle to push_stop (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-set(handles.txt_steer_speed,'String','0');
+%set(handles.txt_steer_speed,'String','0');
 set(handles.txt_drive_speed,'String','0');
-set_param('driver/Path Follower/steer_angle','Value','0');
+%set_param('driver/Path Follower/steer_angle','Value','0');
 set_param('driver/Path Follower/drive_speed','Value','0');
 
 
@@ -441,7 +441,7 @@ function push_check_black_circle_Callback(hObject, eventdata, handles)
 
 %create a run time object that can return the value of the block's
 %output and then put the value in a string.
-rto = get_param('driver/Color Detector/detector','RuntimeObject');
+rto = get_param('driver/Color Detector/Light Sensor','RuntimeObject');
 str = num2str(rto.OutputPort(1).Data);  
 
 %update the gui
@@ -562,6 +562,8 @@ end
 
 function readRobotPoseFromMemMap(hObject, eventdata, hfigure)
 handles = guidata(hfigure);
+
+push_check_black_circle_Callback(hObject, eventdata, handles);
 
 % Wait until the first byte is not zero.
 if handles.sharedfile.Data(1) == 0, return; end;

@@ -89,7 +89,7 @@ if ~exist(filename, 'file')
     end
 end
 
-handles.sharedfile = memmapfile(filename, 'Writable', true, 'Format', 'uint8');
+handles.sharedfile = memmapfile(filename, 'Writable', true, 'Format', 'double');
 
 guidata(hObject,handles);
 
@@ -419,20 +419,22 @@ handles = guidata(hfigure);
 if ~isempty(handles.context)
     % update the Kinect image and update robot position.    
     try
-        fprintf('trying to grab\n');
+%         fprintf('trying to grab\n');
         [handles.rgb, handles.depth] = privateKinectGrab(handles.context);
-        fprintf('grabbed. trying to update robot pos...\n');
+        guidata(hfigure, handles);
+%         fprintf('grabbed. trying to update robot pos...\n');
         [handles.Im,handles.In,handles.x,handles.y,handles.th,update] = ...
             privateUpdateRobotPosition(handles.Im,handles.In, ...
             handles.x,handles.y,handles.th,handles.n,handles.v, ...
             handles.Oax,handles.Xax,handles.Yax,handles.rgb,handles.PARAMS);
+        guidata(hfigure, handles);
         
         fprintf('[%.2f,%.2f,%.2f]\n',handles.x, handles.y, handles.th);
         % Update the file via the memory map.
         if update
             handles.sharedfile.Data(1) = 1;
             handles.sharedfile.Data(2:4) = [handles.x, handles.y, handles.th];
-            fprintf('file updated to [%.2f,%.2f,%.2f]\n',handles.x, handles.y, handles.th);
+            fprintf('file updated to [%.2f,%.2f,%.2f]\n',handles.sharedfile.Data(2),handles.sharedfile.Data(3),handles.sharedfile.Data(4));
         end
         
         guidata(hfigure, handles);
