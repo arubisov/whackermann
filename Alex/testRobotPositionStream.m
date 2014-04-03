@@ -22,8 +22,8 @@ try
     ylabel('Y')
     title('p = 1 Occupancy Grid')
     
-%     hold on
-%     plot(x,y)
+    hold on
+    plot(x,y)
     
     drawnow;
     
@@ -34,8 +34,8 @@ try
         [rgb,depth] = privateKinectGrab(cx);
         [Im,In,x,y,th,upd] = privateUpdateRobotPosition(Im,In,x,y,th,n,v,Oax,Xax,Yax,rgb,PARAMS);
         
-        %scatter(x,y,'*','red')
-        %drawnow
+        scatter(x,y,'*','red')
+        drawnow
         
         in = input('Press a key to continue...','s');
     end

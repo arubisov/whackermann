@@ -13,9 +13,10 @@ B = rgb(:,:,3);
 red_t = uint8(255*graythresh(R));
 gr_t = uint8(255*graythresh(G));
 bl_t = uint8(255*graythresh(B));
+bl_t = 120;
 
-% R_bin = R > red_t;
-R_bin = R > 135;
+% red_t = 135;
+R_bin = R > red_t;
 G_bin = G > gr_t;
 B_bin = B > bl_t;
 
@@ -23,8 +24,14 @@ B_bin = B > bl_t;
 % RR = imerode( R_bin & ~G_bin & ~B_bin & BW, strel('diamond',1));
 % RB = imerode(~R_bin & ~G_bin &  B_bin & BW, strel('diamond',1));
 
-RR = bwareaopen( R_bin & ~G_bin & ~B_bin & BW, 10);
-RB = bwareaopen(~R_bin & ~G_bin &  B_bin & BW, 10);
+if old_y < 1, sz = 20;
+elseif old_y < 2, sz = 10;
+elseif old_y < 3, sz = 8;
+else sz = 6;
+end
+
+RR = bwareaopen( R_bin & ~G_bin & ~B_bin & BW, sz);
+RB = bwareaopen(~R_bin & ~G_bin &  B_bin & BW, sz);
 
 % RR =  R_bin & ~G_bin & ~B_bin & BW;
 % RB = ~R_bin & ~G_bin &  B_bin & BW;
@@ -81,4 +88,5 @@ bl_n = double(min_Bc(1));
 th = atan2( bl_y - y, bl_x - x );
 update = true;
 % 
-imagesc(RR - RB)
+% imagesc(RR - RB)
+% imagesc( (R_bin & ~G_bin & ~B_bin) - (~R_bin & ~G_bin &  B_bin) );

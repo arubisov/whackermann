@@ -4,19 +4,29 @@ initFrame;
 initParams;
 
 [X,Y,Z,ImInd] = getPointCloud(depth,PARAMS);
+    
 % Use more than 1 iteration to stabilize the ground plane
-for i = 1:20, % Set to 20 when not using static frames
+X2 = X;
+Y2 = Y;
+Z2 = Z;
+for i = 1:1, % Set to 20 when not using static frames
     if i == 5, PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 23; end
     if i == 10, PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 1; end % Improves results
-    [n,v] = getGroundPlane(X,Y,Z,PARAMS);
-    if i ~= 1, n = privateRotateFromTo(old_n,n)*n; end
+
+    [n,v] = getGroundPlane(X2,Y2,Z2,PARAMS);
+    [X2,Y2,Z2] = privateRotateAboutVFromTo(X2,Y2,Z2,n,v);
+    if i ~= 1,
+        n = privateRotateFromTo(old_n,n)*n;
+%         v = old_v+v;
+    end
     old_n = n;
-    
-    [X,Y,Z] = privateRotateAboutVFromTo(X,Y,Z,n,v);
-    X = X';
-    Y = Y';
-    Z = Z';
+%     old_v = v;
+%     if i ~= 1,
+%         v = old_v-v;
+%     end
 end
+[~,v] = getGroundPlane(X,Y,Z,PARAMS);
+
 [Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb,PARAMS);
 % [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax);
 

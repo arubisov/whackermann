@@ -9,6 +9,10 @@ initParams;
 
 k = 137;
 scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
+hold on
+line([Oax(1);0],[Oax(2);0],[Oax(3);0],'color','red');
+line([Xax(1);0],[Xax(2);0],[Xax(3);0],'color','red');
+line([Yax(1);0],[Yax(2);0],[Yax(3);0],'color','red');
 xlabel('X')
 ylabel('Y')
 zlabel('Z')
