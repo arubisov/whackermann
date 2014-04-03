@@ -38,9 +38,9 @@ static void registerMessagesc5_driver(SFc5_driverInstanceStruct *chartInstance);
 static void init_script_number_translation(uint32_T c5_machineNumber, uint32_T
   c5_chartNumber);
 static const mxArray *c5_sf_marshallOut(void *chartInstanceVoid, void *c5_inData);
-static boolean_T c5_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static real_T c5_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_circle_detected, const char_T *c5_identifier);
-static boolean_T c5_b_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static real_T c5_b_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId);
 static void c5_sf_marshallIn(void *chartInstanceVoid, const mxArray
   *c5_mxArrayInData, const char_T *c5_varName, void *c5_outData);
@@ -48,19 +48,13 @@ static const mxArray *c5_b_sf_marshallOut(void *chartInstanceVoid, void
   *c5_inData);
 static const mxArray *c5_c_sf_marshallOut(void *chartInstanceVoid, void
   *c5_inData);
-static real_T c5_c_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static int32_T c5_c_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId);
 static void c5_b_sf_marshallIn(void *chartInstanceVoid, const mxArray
   *c5_mxArrayInData, const char_T *c5_varName, void *c5_outData);
-static const mxArray *c5_d_sf_marshallOut(void *chartInstanceVoid, void
-  *c5_inData);
-static int32_T c5_d_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
-  const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId);
-static void c5_c_sf_marshallIn(void *chartInstanceVoid, const mxArray
-  *c5_mxArrayInData, const char_T *c5_varName, void *c5_outData);
-static uint8_T c5_e_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static uint8_T c5_d_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_b_is_active_c5_driver, const char_T *c5_identifier);
-static uint8_T c5_f_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static uint8_T c5_e_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId);
 static void init_dsm_address_info(SFc5_driverInstanceStruct *chartInstance);
 
@@ -96,14 +90,14 @@ static const mxArray *get_sim_state_c5_driver(SFc5_driverInstanceStruct
 {
   const mxArray *c5_st;
   const mxArray *c5_y = NULL;
-  boolean_T c5_hoistedGlobal;
-  boolean_T c5_u;
+  real_T c5_hoistedGlobal;
+  real_T c5_u;
   const mxArray *c5_b_y = NULL;
   uint8_T c5_b_hoistedGlobal;
   uint8_T c5_b_u;
   const mxArray *c5_c_y = NULL;
-  boolean_T *c5_circle_detected;
-  c5_circle_detected = (boolean_T *)ssGetOutputPortSignal(chartInstance->S, 1);
+  real_T *c5_circle_detected;
+  c5_circle_detected = (real_T *)ssGetOutputPortSignal(chartInstance->S, 1);
   c5_st = NULL;
   c5_st = NULL;
   c5_y = NULL;
@@ -111,7 +105,7 @@ static const mxArray *get_sim_state_c5_driver(SFc5_driverInstanceStruct
   c5_hoistedGlobal = *c5_circle_detected;
   c5_u = c5_hoistedGlobal;
   c5_b_y = NULL;
-  sf_mex_assign(&c5_b_y, sf_mex_create("y", &c5_u, 11, 0U, 0U, 0U, 0), FALSE);
+  sf_mex_assign(&c5_b_y, sf_mex_create("y", &c5_u, 0, 0U, 0U, 0U, 0), FALSE);
   sf_mex_setcell(c5_y, 0, c5_b_y);
   c5_b_hoistedGlobal = chartInstance->c5_is_active_c5_driver;
   c5_b_u = c5_b_hoistedGlobal;
@@ -126,13 +120,13 @@ static void set_sim_state_c5_driver(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_st)
 {
   const mxArray *c5_u;
-  boolean_T *c5_circle_detected;
-  c5_circle_detected = (boolean_T *)ssGetOutputPortSignal(chartInstance->S, 1);
+  real_T *c5_circle_detected;
+  c5_circle_detected = (real_T *)ssGetOutputPortSignal(chartInstance->S, 1);
   chartInstance->c5_doneDoubleBufferReInit = TRUE;
   c5_u = sf_mex_dup(c5_st);
   *c5_circle_detected = c5_emlrt_marshallIn(chartInstance, sf_mex_dup
     (sf_mex_getcell(c5_u, 0)), "circle_detected");
-  chartInstance->c5_is_active_c5_driver = c5_e_emlrt_marshallIn(chartInstance,
+  chartInstance->c5_is_active_c5_driver = c5_d_emlrt_marshallIn(chartInstance,
     sf_mex_dup(sf_mex_getcell(c5_u, 1)), "is_active_c5_driver");
   sf_mex_destroy(&c5_u);
   c5_update_debugger_state_c5_driver(chartInstance);
@@ -152,17 +146,17 @@ static void sf_c5_driver(SFc5_driverInstanceStruct *chartInstance)
   uint32_T c5_debug_family_var_map[5];
   real_T c5_nargin = 2.0;
   real_T c5_nargout = 1.0;
-  boolean_T c5_circle_detected;
+  real_T c5_circle_detected;
   uint16_T *c5_b_R;
-  boolean_T *c5_b_circle_detected;
+  real_T *c5_b_circle_detected;
   real_T *c5_b_threshold;
   c5_b_threshold = (real_T *)ssGetInputPortSignal(chartInstance->S, 1);
-  c5_b_circle_detected = (boolean_T *)ssGetOutputPortSignal(chartInstance->S, 1);
+  c5_b_circle_detected = (real_T *)ssGetOutputPortSignal(chartInstance->S, 1);
   c5_b_R = (uint16_T *)ssGetInputPortSignal(chartInstance->S, 0);
   _sfTime_ = (real_T)ssGetT(chartInstance->S);
   _SFD_CC_CALL(CHART_ENTER_SFUNCTION_TAG, 1U, chartInstance->c5_sfEvent);
   _SFD_DATA_RANGE_CHECK((real_T)*c5_b_R, 0U);
-  _SFD_DATA_RANGE_CHECK((real_T)*c5_b_circle_detected, 1U);
+  _SFD_DATA_RANGE_CHECK(*c5_b_circle_detected, 1U);
   _SFD_DATA_RANGE_CHECK(*c5_b_threshold, 2U);
   chartInstance->c5_sfEvent = CALL_EVENT;
   _SFD_CC_CALL(CHART_ENTER_DURING_FUNCTION_TAG, 1U, chartInstance->c5_sfEvent);
@@ -172,22 +166,22 @@ static void sf_c5_driver(SFc5_driverInstanceStruct *chartInstance)
   c5_threshold = c5_b_hoistedGlobal;
   _SFD_SYMBOL_SCOPE_PUSH_EML(0U, 5U, 5U, c5_debug_family_names,
     c5_debug_family_var_map);
-  _SFD_SYMBOL_SCOPE_ADD_EML_IMPORTABLE(&c5_nargin, 0U, c5_b_sf_marshallOut,
-    c5_b_sf_marshallIn);
-  _SFD_SYMBOL_SCOPE_ADD_EML_IMPORTABLE(&c5_nargout, 1U, c5_b_sf_marshallOut,
-    c5_b_sf_marshallIn);
-  _SFD_SYMBOL_SCOPE_ADD_EML(&c5_R, 2U, c5_c_sf_marshallOut);
-  _SFD_SYMBOL_SCOPE_ADD_EML(&c5_threshold, 3U, c5_b_sf_marshallOut);
+  _SFD_SYMBOL_SCOPE_ADD_EML_IMPORTABLE(&c5_nargin, 0U, c5_sf_marshallOut,
+    c5_sf_marshallIn);
+  _SFD_SYMBOL_SCOPE_ADD_EML_IMPORTABLE(&c5_nargout, 1U, c5_sf_marshallOut,
+    c5_sf_marshallIn);
+  _SFD_SYMBOL_SCOPE_ADD_EML(&c5_R, 2U, c5_b_sf_marshallOut);
+  _SFD_SYMBOL_SCOPE_ADD_EML(&c5_threshold, 3U, c5_sf_marshallOut);
   _SFD_SYMBOL_SCOPE_ADD_EML_IMPORTABLE(&c5_circle_detected, 4U,
     c5_sf_marshallOut, c5_sf_marshallIn);
   CV_EML_FCN(0, 0);
   _SFD_EML_CALL(0U, chartInstance->c5_sfEvent, 7);
   if (CV_EML_IF(0, 1, 0, (real_T)c5_R < c5_threshold)) {
     _SFD_EML_CALL(0U, chartInstance->c5_sfEvent, 8);
-    c5_circle_detected = TRUE;
+    c5_circle_detected = 1.0;
   } else {
     _SFD_EML_CALL(0U, chartInstance->c5_sfEvent, 10);
-    c5_circle_detected = FALSE;
+    c5_circle_detected = 0.0;
   }
 
   _SFD_EML_CALL(0U, chartInstance->c5_sfEvent, -10);
@@ -214,66 +208,6 @@ static void init_script_number_translation(uint32_T c5_machineNumber, uint32_T
 static const mxArray *c5_sf_marshallOut(void *chartInstanceVoid, void *c5_inData)
 {
   const mxArray *c5_mxArrayOutData = NULL;
-  boolean_T c5_u;
-  const mxArray *c5_y = NULL;
-  SFc5_driverInstanceStruct *chartInstance;
-  chartInstance = (SFc5_driverInstanceStruct *)chartInstanceVoid;
-  c5_mxArrayOutData = NULL;
-  c5_u = *(boolean_T *)c5_inData;
-  c5_y = NULL;
-  sf_mex_assign(&c5_y, sf_mex_create("y", &c5_u, 11, 0U, 0U, 0U, 0), FALSE);
-  sf_mex_assign(&c5_mxArrayOutData, c5_y, FALSE);
-  return c5_mxArrayOutData;
-}
-
-static boolean_T c5_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
-  const mxArray *c5_circle_detected, const char_T *c5_identifier)
-{
-  boolean_T c5_y;
-  emlrtMsgIdentifier c5_thisId;
-  c5_thisId.fIdentifier = c5_identifier;
-  c5_thisId.fParent = NULL;
-  c5_y = c5_b_emlrt_marshallIn(chartInstance, sf_mex_dup(c5_circle_detected),
-    &c5_thisId);
-  sf_mex_destroy(&c5_circle_detected);
-  return c5_y;
-}
-
-static boolean_T c5_b_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
-  const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId)
-{
-  boolean_T c5_y;
-  boolean_T c5_b0;
-  sf_mex_import(c5_parentId, sf_mex_dup(c5_u), &c5_b0, 1, 11, 0U, 0, 0U, 0);
-  c5_y = c5_b0;
-  sf_mex_destroy(&c5_u);
-  return c5_y;
-}
-
-static void c5_sf_marshallIn(void *chartInstanceVoid, const mxArray
-  *c5_mxArrayInData, const char_T *c5_varName, void *c5_outData)
-{
-  const mxArray *c5_circle_detected;
-  const char_T *c5_identifier;
-  emlrtMsgIdentifier c5_thisId;
-  boolean_T c5_y;
-  SFc5_driverInstanceStruct *chartInstance;
-  chartInstance = (SFc5_driverInstanceStruct *)chartInstanceVoid;
-  c5_circle_detected = sf_mex_dup(c5_mxArrayInData);
-  c5_identifier = c5_varName;
-  c5_thisId.fIdentifier = c5_identifier;
-  c5_thisId.fParent = NULL;
-  c5_y = c5_b_emlrt_marshallIn(chartInstance, sf_mex_dup(c5_circle_detected),
-    &c5_thisId);
-  sf_mex_destroy(&c5_circle_detected);
-  *(boolean_T *)c5_outData = c5_y;
-  sf_mex_destroy(&c5_mxArrayInData);
-}
-
-static const mxArray *c5_b_sf_marshallOut(void *chartInstanceVoid, void
-  *c5_inData)
-{
-  const mxArray *c5_mxArrayOutData = NULL;
   real_T c5_u;
   const mxArray *c5_y = NULL;
   SFc5_driverInstanceStruct *chartInstance;
@@ -286,7 +220,51 @@ static const mxArray *c5_b_sf_marshallOut(void *chartInstanceVoid, void
   return c5_mxArrayOutData;
 }
 
-static const mxArray *c5_c_sf_marshallOut(void *chartInstanceVoid, void
+static real_T c5_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+  const mxArray *c5_circle_detected, const char_T *c5_identifier)
+{
+  real_T c5_y;
+  emlrtMsgIdentifier c5_thisId;
+  c5_thisId.fIdentifier = c5_identifier;
+  c5_thisId.fParent = NULL;
+  c5_y = c5_b_emlrt_marshallIn(chartInstance, sf_mex_dup(c5_circle_detected),
+    &c5_thisId);
+  sf_mex_destroy(&c5_circle_detected);
+  return c5_y;
+}
+
+static real_T c5_b_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+  const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId)
+{
+  real_T c5_y;
+  real_T c5_d0;
+  sf_mex_import(c5_parentId, sf_mex_dup(c5_u), &c5_d0, 1, 0, 0U, 0, 0U, 0);
+  c5_y = c5_d0;
+  sf_mex_destroy(&c5_u);
+  return c5_y;
+}
+
+static void c5_sf_marshallIn(void *chartInstanceVoid, const mxArray
+  *c5_mxArrayInData, const char_T *c5_varName, void *c5_outData)
+{
+  const mxArray *c5_circle_detected;
+  const char_T *c5_identifier;
+  emlrtMsgIdentifier c5_thisId;
+  real_T c5_y;
+  SFc5_driverInstanceStruct *chartInstance;
+  chartInstance = (SFc5_driverInstanceStruct *)chartInstanceVoid;
+  c5_circle_detected = sf_mex_dup(c5_mxArrayInData);
+  c5_identifier = c5_varName;
+  c5_thisId.fIdentifier = c5_identifier;
+  c5_thisId.fParent = NULL;
+  c5_y = c5_b_emlrt_marshallIn(chartInstance, sf_mex_dup(c5_circle_detected),
+    &c5_thisId);
+  sf_mex_destroy(&c5_circle_detected);
+  *(real_T *)c5_outData = c5_y;
+  sf_mex_destroy(&c5_mxArrayInData);
+}
+
+static const mxArray *c5_b_sf_marshallOut(void *chartInstanceVoid, void
   *c5_inData)
 {
   const mxArray *c5_mxArrayOutData = NULL;
@@ -302,36 +280,6 @@ static const mxArray *c5_c_sf_marshallOut(void *chartInstanceVoid, void
   return c5_mxArrayOutData;
 }
 
-static real_T c5_c_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
-  const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId)
-{
-  real_T c5_y;
-  real_T c5_d0;
-  sf_mex_import(c5_parentId, sf_mex_dup(c5_u), &c5_d0, 1, 0, 0U, 0, 0U, 0);
-  c5_y = c5_d0;
-  sf_mex_destroy(&c5_u);
-  return c5_y;
-}
-
-static void c5_b_sf_marshallIn(void *chartInstanceVoid, const mxArray
-  *c5_mxArrayInData, const char_T *c5_varName, void *c5_outData)
-{
-  const mxArray *c5_nargout;
-  const char_T *c5_identifier;
-  emlrtMsgIdentifier c5_thisId;
-  real_T c5_y;
-  SFc5_driverInstanceStruct *chartInstance;
-  chartInstance = (SFc5_driverInstanceStruct *)chartInstanceVoid;
-  c5_nargout = sf_mex_dup(c5_mxArrayInData);
-  c5_identifier = c5_varName;
-  c5_thisId.fIdentifier = c5_identifier;
-  c5_thisId.fParent = NULL;
-  c5_y = c5_c_emlrt_marshallIn(chartInstance, sf_mex_dup(c5_nargout), &c5_thisId);
-  sf_mex_destroy(&c5_nargout);
-  *(real_T *)c5_outData = c5_y;
-  sf_mex_destroy(&c5_mxArrayInData);
-}
-
 const mxArray *sf_c5_driver_get_eml_resolved_functions_info(void)
 {
   const mxArray *c5_nameCaptureInfo = NULL;
@@ -341,7 +289,7 @@ const mxArray *sf_c5_driver_get_eml_resolved_functions_info(void)
   return c5_nameCaptureInfo;
 }
 
-static const mxArray *c5_d_sf_marshallOut(void *chartInstanceVoid, void
+static const mxArray *c5_c_sf_marshallOut(void *chartInstanceVoid, void
   *c5_inData)
 {
   const mxArray *c5_mxArrayOutData = NULL;
@@ -357,7 +305,7 @@ static const mxArray *c5_d_sf_marshallOut(void *chartInstanceVoid, void
   return c5_mxArrayOutData;
 }
 
-static int32_T c5_d_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static int32_T c5_c_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId)
 {
   int32_T c5_y;
@@ -368,7 +316,7 @@ static int32_T c5_d_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   return c5_y;
 }
 
-static void c5_c_sf_marshallIn(void *chartInstanceVoid, const mxArray
+static void c5_b_sf_marshallIn(void *chartInstanceVoid, const mxArray
   *c5_mxArrayInData, const char_T *c5_varName, void *c5_outData)
 {
   const mxArray *c5_b_sfEvent;
@@ -381,27 +329,27 @@ static void c5_c_sf_marshallIn(void *chartInstanceVoid, const mxArray
   c5_identifier = c5_varName;
   c5_thisId.fIdentifier = c5_identifier;
   c5_thisId.fParent = NULL;
-  c5_y = c5_d_emlrt_marshallIn(chartInstance, sf_mex_dup(c5_b_sfEvent),
+  c5_y = c5_c_emlrt_marshallIn(chartInstance, sf_mex_dup(c5_b_sfEvent),
     &c5_thisId);
   sf_mex_destroy(&c5_b_sfEvent);
   *(int32_T *)c5_outData = c5_y;
   sf_mex_destroy(&c5_mxArrayInData);
 }
 
-static uint8_T c5_e_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static uint8_T c5_d_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_b_is_active_c5_driver, const char_T *c5_identifier)
 {
   uint8_T c5_y;
   emlrtMsgIdentifier c5_thisId;
   c5_thisId.fIdentifier = c5_identifier;
   c5_thisId.fParent = NULL;
-  c5_y = c5_f_emlrt_marshallIn(chartInstance, sf_mex_dup
+  c5_y = c5_e_emlrt_marshallIn(chartInstance, sf_mex_dup
     (c5_b_is_active_c5_driver), &c5_thisId);
   sf_mex_destroy(&c5_b_is_active_c5_driver);
   return c5_y;
 }
 
-static uint8_T c5_f_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
+static uint8_T c5_e_emlrt_marshallIn(SFc5_driverInstanceStruct *chartInstance,
   const mxArray *c5_u, const emlrtMsgIdentifier *c5_parentId)
 {
   uint8_T c5_y;
@@ -439,10 +387,10 @@ extern void utFree(void*);
 
 void sf_c5_driver_get_check_sum(mxArray *plhs[])
 {
-  ((real_T *)mxGetPr((plhs[0])))[0] = (real_T)(1103433026U);
-  ((real_T *)mxGetPr((plhs[0])))[1] = (real_T)(4033086144U);
-  ((real_T *)mxGetPr((plhs[0])))[2] = (real_T)(1801136651U);
-  ((real_T *)mxGetPr((plhs[0])))[3] = (real_T)(3605307760U);
+  ((real_T *)mxGetPr((plhs[0])))[0] = (real_T)(3293112843U);
+  ((real_T *)mxGetPr((plhs[0])))[1] = (real_T)(2724669838U);
+  ((real_T *)mxGetPr((plhs[0])))[2] = (real_T)(457322316U);
+  ((real_T *)mxGetPr((plhs[0])))[3] = (real_T)(1589786684U);
 }
 
 mxArray *sf_c5_driver_get_autoinheritance_info(void)
@@ -454,7 +402,7 @@ mxArray *sf_c5_driver_get_autoinheritance_info(void)
     autoinheritanceFields);
 
   {
-    mxArray *mxChecksum = mxCreateString("41URS1xNeGo09AKW8LjacC");
+    mxArray *mxChecksum = mxCreateString("tccJsrn4GEs6AgoE3Kw96D");
     mxSetField(mxAutoinheritanceInfo,0,"checksum",mxChecksum);
   }
 
@@ -525,7 +473,7 @@ mxArray *sf_c5_driver_get_autoinheritance_info(void)
       const char *typeFields[] = { "base", "fixpt" };
 
       mxArray *mxType = mxCreateStructMatrix(1,1,2,typeFields);
-      mxSetField(mxType,0,"base",mxCreateDoubleScalar(1));
+      mxSetField(mxType,0,"base",mxCreateDoubleScalar(10));
       mxSetField(mxType,0,"fixpt",mxCreateDoubleMatrix(0,0,mxREAL));
       mxSetField(mxData,0,"type",mxType);
     }
@@ -622,8 +570,8 @@ static void chart_debug_initialization(SimStruct *S, unsigned int
 
         /* Initialization of MATLAB Function Model Coverage */
         _SFD_CV_INIT_EML(0,1,1,1,0,0,0,0,0,0,0);
-        _SFD_CV_INIT_EML_FCN(0,0,"eML_blk_kernel",0,-1,331);
-        _SFD_CV_INIT_EML_IF(0,1,0,231,249,286,331);
+        _SFD_CV_INIT_EML_FCN(0,0,"eML_blk_kernel",0,-1,324);
+        _SFD_CV_INIT_EML_IF(0,1,0,231,249,283,324);
         _SFD_TRANS_COV_WTS(0,0,0,1,0);
         if (chartAlreadyPresent==0) {
           _SFD_TRANS_COV_MAPS(0,
@@ -634,19 +582,19 @@ static void chart_debug_initialization(SimStruct *S, unsigned int
         }
 
         _SFD_SET_DATA_COMPILED_PROPS(0,SF_UINT16,0,NULL,0,0,0,0.0,1.0,0,0,
-          (MexFcnForType)c5_c_sf_marshallOut,(MexInFcnForType)NULL);
-        _SFD_SET_DATA_COMPILED_PROPS(1,SF_UINT8,0,NULL,0,0,0,0.0,1.0,0,0,
+          (MexFcnForType)c5_b_sf_marshallOut,(MexInFcnForType)NULL);
+        _SFD_SET_DATA_COMPILED_PROPS(1,SF_DOUBLE,0,NULL,0,0,0,0.0,1.0,0,0,
           (MexFcnForType)c5_sf_marshallOut,(MexInFcnForType)c5_sf_marshallIn);
         _SFD_SET_DATA_COMPILED_PROPS(2,SF_DOUBLE,0,NULL,0,0,0,0.0,1.0,0,0,
-          (MexFcnForType)c5_b_sf_marshallOut,(MexInFcnForType)NULL);
+          (MexFcnForType)c5_sf_marshallOut,(MexInFcnForType)NULL);
 
         {
           uint16_T *c5_R;
-          boolean_T *c5_circle_detected;
+          real_T *c5_circle_detected;
           real_T *c5_threshold;
           c5_threshold = (real_T *)ssGetInputPortSignal(chartInstance->S, 1);
-          c5_circle_detected = (boolean_T *)ssGetOutputPortSignal
-            (chartInstance->S, 1);
+          c5_circle_detected = (real_T *)ssGetOutputPortSignal(chartInstance->S,
+            1);
           c5_R = (uint16_T *)ssGetInputPortSignal(chartInstance->S, 0);
           _SFD_SET_DATA_VALUE_PTR(0U, c5_R);
           _SFD_SET_DATA_VALUE_PTR(1U, c5_circle_detected);
@@ -663,7 +611,7 @@ static void chart_debug_initialization(SimStruct *S, unsigned int
 
 static const char* sf_get_instance_specialization(void)
 {
-  return "d8mHCp8ncVQxXbFI2Vx4WC";
+  return "ca8is8RQopM9gFnAGadHh";
 }
 
 static void sf_opaque_initialize_c5_driver(void *chartInstanceVar)
@@ -829,10 +777,10 @@ static void mdlSetWorkWidths_c5_driver(SimStruct *S)
   }
 
   ssSetOptions(S,ssGetOptions(S)|SS_OPTION_WORKS_WITH_CODE_REUSE);
-  ssSetChecksum0(S,(1694864424U));
-  ssSetChecksum1(S,(1950229681U));
-  ssSetChecksum2(S,(3843426165U));
-  ssSetChecksum3(S,(3926491152U));
+  ssSetChecksum0(S,(93380779U));
+  ssSetChecksum1(S,(546882663U));
+  ssSetChecksum2(S,(3163517205U));
+  ssSetChecksum3(S,(3548330508U));
   ssSetmdlDerivatives(S, NULL);
   ssSetExplicitFCSSCtrl(S,1);
   ssSupportsMultipleExecInstances(S,1);

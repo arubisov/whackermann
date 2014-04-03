@@ -195,7 +195,7 @@
   ;%**************************
       
     nTotData      = 0; %add to this count as we go
-    nTotSects     = 2;
+    nTotSects     = 1;
     sectIdxOffset = 0;
     
     ;%
@@ -289,17 +289,6 @@
       sigMap.sections(1) = section;
       clear section
       
-      section.nData     = 1;
-      section.data(1)  = dumData; %prealloc
-      
-	  ;% n3qi1whofzj.bxgrnzuuqo
-	  section.data(1).logicalSrcIdx = 16;
-	  section.data(1).dtTransOffset = 0;
-	
-      nTotData = nTotData + section.nData;
-      sigMap.sections(2) = section;
-      clear section
-      
     
       ;%
       ;% Non-auto Data (signal)
@@ -319,7 +308,7 @@
       
     nTotData      = 0; %add to this count as we go
     nTotSects     = 3;
-    sectIdxOffset = 2;
+    sectIdxOffset = 1;
     
     ;%
     ;% Define dummy sections & preallocate arrays
@@ -368,8 +357,8 @@
       dworkMap.sections(1) = section;
       clear section
       
-      section.nData     = 6;
-      section.data(6)  = dumData; %prealloc
+      section.nData     = 5;
+      section.data(5)  = dumData; %prealloc
       
 	  ;% ew10rzwqr2t.gbeusc0tbn.LoggedData
 	  section.data(1).logicalSrcIdx = 5;
@@ -391,10 +380,6 @@
 	  section.data(5).logicalSrcIdx = 9;
 	  section.data(5).dtTransOffset = 4;
 	
-	  ;% ew10rzwqr2t.dlkchlh2oe.LoggedData
-	  section.data(6).logicalSrcIdx = 10;
-	  section.data(6).dtTransOffset = 5;
-	
       nTotData = nTotData + section.nData;
       dworkMap.sections(2) = section;
       clear section
@@ -403,15 +388,15 @@
       section.data(3)  = dumData; %prealloc
       
 	  ;% ew10rzwqr2t.nn4ggl2now
-	  section.data(1).logicalSrcIdx = 11;
+	  section.data(1).logicalSrcIdx = 10;
 	  section.data(1).dtTransOffset = 0;
 	
 	  ;% ew10rzwqr2t.bpwdxwyajn
-	  section.data(2).logicalSrcIdx = 12;
+	  section.data(2).logicalSrcIdx = 11;
 	  section.data(2).dtTransOffset = 1;
 	
 	  ;% ew10rzwqr2t.gt1ccqo2it
-	  section.data(3).logicalSrcIdx = 13;
+	  section.data(3).logicalSrcIdx = 12;
 	  section.data(3).dtTransOffset = 2;
 	
       nTotData = nTotData + section.nData;
@@ -444,8 +429,8 @@
   ;%
 
 
-  targMap.checksum0 = 3142013219;
-  targMap.checksum1 = 912154417;
-  targMap.checksum2 = 1561717506;
-  targMap.checksum3 = 4159003517;
+  targMap.checksum0 = 3719152532;
+  targMap.checksum1 = 42367454;
+  targMap.checksum2 = 673937179;
+  targMap.checksum3 = 502463156;
 

@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 02-Apr-2014 20:46:07
+% Last Modified by GUIDE v2.5 02-Apr-2014 22:02:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -69,10 +69,30 @@ handles.drawObsOnGrid = false;
 binary_cmap = [1 1 1; 0 0 0];
 colormap(binary_cmap);
 
+filename = 'pathplanner_memmapfile.dat';
+ 
+% Create the communications file if it is not already there.
+if ~exist(filename, 'file')
+    [f, msg] = fopen(filename, 'wb');
+    if f ~= -1
+        fwrite(f, zeros(1,4), 'double');
+        fclose(f);
+    else
+        error('MATLAB:demo:send:cannotOpenFile', ...
+              'Cannot open file "%s": %s.', filename, msg);
+    end
+end
+
+handles.sharedfile = memmapfile(filename, 'Writable', true, 'Format', 'uint8');
+
+handles.timer = timer(...
+    'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
+    'Period', 0.25, ...                    % Initial period is 2 sec.
+    'TimerFcn', {@readRobotPoseFromMemMap,hObject}); % Specify callback
+
 guidata(hObject,handles);
 
-push_refresh_occ_Callback(hObject, eventdata, handles);
-
+start(handles.timer);
 
 % --- Outputs from this function are returned to the command line.
 function varargout = interface_OutputFcn(hObject, eventdata, handles) 
@@ -175,7 +195,6 @@ function push_clear_path_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-set(handles.push_exec_path, 'Enable', 'off');
 handles.path = [];
 guidata(hObject, handles);
 set_param('driver/Path Follower/Exec Path','Value','0');
@@ -534,3 +553,27 @@ function fig_int_CloseRequestFcn(hObject, eventdata, handles)
 
 % Hint: delete(hObject) closes the figure
 delete(hObject);
+
+if strcmp(get(handles.timer, 'Running'), 'on')
+    stop(handles.timer);
+    delete(handles.timer)
+end
+
+
+function readRobotPoseFromMemMap(hObject, eventdata, hfigure)
+handles = guidata(hfigure);
+
+% Wait until the first byte is not zero.
+if handles.sharedfile.Data(1) == 0, return; end;
+
+% The first byte now contains the length of the message.
+% Get it from m.
+set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%f,%f,%f]', handles.sharedfile.Data(2), handles.sharedfile.Data(3), handles.sharedfile.Data(4)));
+
+curr_reset = str2double(get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value'));
+if curr_reset == 1, set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','-1');
+else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1'); end
+
+handles.sharedfile.Data(1:4) = zeros(1,4);
+
+fprintf('simulink pose updated.\n');

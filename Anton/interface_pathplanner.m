@@ -75,6 +75,22 @@ handles.drawObsOnGrid = false;
 handles.draw_pt1 = [];
 handles.draw_flag = 0;
 
+filename = 'pathplanner_memmapfile.dat';
+ 
+% Create the communications file if it is not already there.
+if ~exist(filename, 'file')
+    [f, msg] = fopen(filename, 'wb');
+    if f ~= -1
+        fwrite(f, zeros(1,3), 'double');
+        fclose(f);
+    else
+        error('MATLAB:demo:send:cannotOpenFile', ...
+              'Cannot open file "%s": %s.', filename, msg);
+    end
+end
+
+handles.sharedfile = memmapfile(filename, 'Writable', true, 'Format', 'uint8');
+
 guidata(hObject,handles);
 
 loadOccGrids(hObject, eventdata, handles);
@@ -396,11 +412,19 @@ handles = guidata(hfigure);
 if ~isempty(handles.context)
     % update the Kinect image and update robot position.    
     try
+        tic;
         [handles.rgb, handles.depth] = privateKinectGrab(handles.context);
-        [handles.Im,handles.In,handles.x,handles.y,handles.th] = ...
+        toc;
+        [~,~,handles.x,handles.y,handles.th] = ...
             privateUpdateRobotPosition(handles.Im,handles.In, ...
             handles.x,handles.y,handles.th,handles.n,handles.v, ...
             handles.Oax,handles.Xax,handles.Yax,handles.rgb,handles.PARAMS);
+
+        % Update the file via the memory map.
+        handles.sharedfile.Data(1) = 1;
+        handles.sharedfile.Data(2:4) = [handles.x, handles.y, handles.th];
+        fprintf('file updated to [%.2f,%.2f,%.2f]\n',handles.x, handles.y, handles.th);
+        
         guidata(hfigure, handles);
         updateCameraView(handles);
     catch
@@ -500,7 +524,7 @@ function toggle_stream_kinect_Callback(hObject, eventdata, handles)
 
 handles.timer = timer(...
     'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
-    'Period', 5, ...                    % Initial period is 1 sec.
+    'Period', 2, ...                    % Initial period is 2 sec.
     'TimerFcn', {@refreshKinect,hObject}); % Specify callback
 
 guidata(hObject,handles);

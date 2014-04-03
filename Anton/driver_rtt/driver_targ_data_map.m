@@ -391,7 +391,7 @@
 	  section.data(5).logicalSrcIdx = 9;
 	  section.data(5).dtTransOffset = 4;
 	
-	  ;% ew10rzwqr2t.dlkchlh2oe.LoggedData
+	  ;% ew10rzwqr2t.ni10trnyad.LoggedData
 	  section.data(6).logicalSrcIdx = 10;
 	  section.data(6).dtTransOffset = 5;
 	
@@ -444,8 +444,8 @@
   ;%
 
 
-  targMap.checksum0 = 3142013219;
-  targMap.checksum1 = 912154417;
-  targMap.checksum2 = 1561717506;
-  targMap.checksum3 = 4159003517;
+  targMap.checksum0 = 1449212816;
+  targMap.checksum1 = 1504209258;
+  targMap.checksum2 = 1622084750;
+  targMap.checksum3 = 3346376697;
 
