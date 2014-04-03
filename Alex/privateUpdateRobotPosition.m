@@ -23,8 +23,8 @@ B_bin = B > bl_t;
 % RR = imerode( R_bin & ~G_bin & ~B_bin & BW, strel('diamond',1));
 % RB = imerode(~R_bin & ~G_bin &  B_bin & BW, strel('diamond',1));
 
-RR = bwareaopen( R_bin & ~G_bin & ~B_bin & BW, 4);
-RB = bwareaopen(~R_bin & ~G_bin &  B_bin & BW, 4);
+RR = bwareaopen( R_bin & ~G_bin & ~B_bin & BW, 10);
+RB = bwareaopen(~R_bin & ~G_bin &  B_bin & BW, 10);
 
 % RR =  R_bin & ~G_bin & ~B_bin & BW;
 % RB = ~R_bin & ~G_bin &  B_bin & BW;
@@ -81,4 +81,4 @@ bl_n = double(min_Bc(1));
 th = atan2( bl_y - y, bl_x - x );
 update = true;
 % 
-% imagesc(RR - RB)
+imagesc(RR - RB)

@@ -348,9 +348,16 @@ function axes_occ_binary_ButtonDownFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
  
 % Get default command line output from handles structure
-% point = get(handles.axes_occ_binary,'CurrentPoint');    % button down detected
+point = get(handles.axes_occ_binary,'CurrentPoint');    % button down detected
+point = point(1,1:2); 
 
-fprintf('TODO: remove obstacles.\n');
+[~, x_ind] = min(abs(handles.gr_x - point(1)));
+[~, y_ind] = min(abs(handles.gr_y - point(2)));
+occ_ind = [x_ind, y_ind];
+                
+[handles.Occ,handles.Known,handles.BinOcc] = undrawOccWall(handles.Occ,handles.Known,occ_ind);
+guidata(hObject, handles);
+redrawOccBinary(hObject, eventdata, handles);
 
 
 function redrawOccBinary(hObject, eventdata, handles)
@@ -358,7 +365,7 @@ function redrawOccBinary(hObject, eventdata, handles)
 
 subplot(handles.axes_occ_binary);
 imagesc(handles.gr_x, handles.gr_y, (handles.BinOcc > handles.PARAMS.RRT_OCC_CONF));
-set(handles.axes_occ_binary,'YDir','normal')
+set(handles.axes_occ_binary,'YDir','normal');
 axis image
 set(handles.axes_occ_binary, 'ButtonDownFcn', {@axes_occ_binary_ButtonDownFcn, handles});
 set(findobj(gca,'type','image'),'hittest','off')
