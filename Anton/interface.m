@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 03-Apr-2014 03:51:45
+% Last Modified by GUIDE v2.5 03-Apr-2014 13:41:37
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -91,8 +91,6 @@ handles.timer = timer(...
     'TimerFcn', {@readRobotPoseFromMemMap,hObject}); % Specify callback
 
 guidata(hObject,handles);
-
-start(handles.timer);
 
 % --- Outputs from this function are returned to the command line.
 function varargout = interface_OutputFcn(hObject, eventdata, handles) 
@@ -276,6 +274,7 @@ function push_stop_Callback(hObject, eventdata, handles)
 set(handles.txt_drive_speed,'String','0');
 %set_param('driver/Path Follower/steer_angle','Value','0');
 set_param('driver/Path Follower/drive_speed','Value','0');
+set_param('driver/Path Follower/Exec Path','Value','0');
 
 
 % --- Executes on button press in push_beep.
@@ -334,7 +333,7 @@ if get(handles.toggle_manual_drive,'Value') == 1
    elseif strcmp(eventdata.Key, 'rightarrow')
        % turn right, ie decrease motor position
        old_phi = str2double(get(handles.txt_steer_speed,'string'));
-       new_phi = max(min(old_phi-3, handles.PARAMS.MAX_STEER*180/pi), -handles.PARAMS.MAX_STEER*180/pi);
+       new_phi = max(min(old_phi-3, 2*handles.PARAMS.MAX_STEER*180/pi), -handles.PARAMS.MAX_STEER*180/pi);
        set(handles.txt_steer_speed,'string',num2str(new_phi));
        set_param('driver/Path Follower/steer_angle','Value',num2str(new_phi));
    elseif strcmp(eventdata.Key, 'space')
@@ -360,7 +359,7 @@ set_param('driver/Path Follower/steer_angle','Value','0');
 set_param('driver/Color Detector/color_detect_threshold','Value',num2str(handles.PARAMS.COLOR_DETECT_THRESHOLD));
 set_param('driver/Path Follower/Exec Path','Value','0');
 set_param('driver/Path Follower/path','Value',mat2str(zeros(6, handles.PARAMS.RRT_MAX_WAYPOINTS)));
-set_param('driver/Dead Reckoning/to meters','Gain',num2str(handles.PARAMS.ROBOT_WHEEL_CIRCUM/360));
+set_param('driver/Dead Reckoning/to meters','Gain','0.0008128');
 
 
 % --- Executes on button press in push_setrobottheta.
@@ -579,3 +578,21 @@ else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1
 handles.sharedfile.Data(1:4) = zeros(1,4);
 
 fprintf('simulink pose updated.\n');
+
+
+% --- Executes on button press in tog_stream_from_cam.
+function tog_stream_from_cam_Callback(hObject, eventdata, handles)
+% hObject    handle to tog_stream_from_cam (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of tog_stream_from_cam
+if get(hObject,'Value') == 1
+    set(hObject,'String','Pose From Cam: ON');
+    set(hObject,'ForegroundColor','red');
+    if strcmp(get(handles.timer, 'Running'), 'off'), start(handles.timer); end;
+else
+    set(hObject,'String','Pose From Cam: OFF');
+    set(hObject,'ForegroundColor','black');
+    if strcmp(get(handles.timer, 'Running'), 'on'), stop(handles.timer); end;
+end

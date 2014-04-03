@@ -18,7 +18,7 @@
   *   in the Simulink Coder User's Manual in the Chapter titled,
   *   "Wrapper S-functions".
   *
-  *   Created: Mon Mar 31 15:32:30 2014
+  *   Created: Thu Apr  3 14:36:05 2014
   */
 
 
@@ -217,6 +217,9 @@ if (exec_path[0] == 0 || xD[2] == 1) {
     
     if (new_steer_angle > 0) new_steer_angle = fmod(new_steer_angle + M_PI, 2.0*M_PI) - M_PI;
     else new_steer_angle = fmod(new_steer_angle - M_PI, 2.0*M_PI) + M_PI;
+    
+    new_steer_angle = (new_steer_angle < -40) ? -40 : new_steer_angle;
+    new_steer_angle = (new_steer_angle > 40) ? 40 : new_steer_angle;
 
     steer_angle[0] = new_steer_angle;
 //     mexPrintf("PATH_FOL: vel=%.2f, steer=%.2f, cte=%.5f\n", drive_speed[0], steer_angle[0], cte);    
