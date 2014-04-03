@@ -74,6 +74,6 @@ function path = RRT_star(map, start, goal, params)
  
     path = problem.return_path();
    
-    problem.plot();
+    % problem.plot();
     
 end

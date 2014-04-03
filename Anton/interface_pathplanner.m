@@ -22,7 +22,7 @@ function varargout = interface_pathplanner(varargin)
 
 % Edit the above text to modify the response to help interface_pathplanner
 
-% Last Modified by GUIDE v2.5 30-Mar-2014 15:42:08
+% Last Modified by GUIDE v2.5 02-Apr-2014 20:36:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -59,15 +59,28 @@ handles.output = hObject;
 guidata(hObject, handles);
 
 % UIWAIT makes interface_pathplanner wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
+% uiwait(handles.fig_int_planner);
 
 initParams;
+initFrame;
+
+handles.default_cmap = colormap;
+handles.context = context;
+handles.depth = depth;
+handles.rgb = rgb;
 handles.PARAMS = PARAMS;
 handles.path = [];
+handles.reset_robot_xy = false;
+handles.drawObsOnGrid = false;
+handles.draw_pt1 = [];
+handles.draw_flag = 0;
+
 guidata(hObject,handles);
 
+loadOccGrids(hObject, eventdata, handles);
 binary_cmap = [1 1 1; 0 0 0];
-colormap(binary_cmap);
+%handles.default_cmap
+colormap([binary_cmap; binary_cmap]);
 
 
 
@@ -82,33 +95,6 @@ function varargout = interface_pathplanner_OutputFcn(hObject, eventdata, handles
 varargout{1} = handles.output;
 
 
-% --- Executes on button press in push_refresh_occ.
-function push_refresh_occ_Callback(hObject, eventdata, handles)
-% hObject    handle to push_refresh_occ (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-handles.occ = dlmread('pathplanner_occ_grid.txt');
-handles.gr_x = dlmread('pathplanner_gr_x.txt');
-handles.gr_y = dlmread('pathplanner_gr_y.txt');
-handles.PARAMS.gr_x = handles.gr_x;
-handles.PARAMS.gr_y = handles.gr_y;
-guidata(hObject, handles);
-
-subplot(handles.axes_occ);
-imagesc(handles.gr_x, handles.gr_y, (handles.occ > handles.PARAMS.RRT_OCC_CONF));
-set(gca,'YDir','normal')
-axis image
-
-updateOccBinary(hObject, eventdata, handles)
-
-
-function updateOccBinary(hObject, eventdata, handles)
-% Helper function for ploting the selected plot type
-
-set(handles.axes_occ, 'ButtonDownFcn', {@axes_occ_ButtonDownFcn, handles});
-set(findobj(gca,'type','image'),'hittest','off')
-
-
 % --- Executes on button press in push_rrt.
 function push_rrt_Callback(hObject, eventdata, handles)
 % hObject    handle to push_rrt (see GCBO)
@@ -116,31 +102,29 @@ function push_rrt_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % GET GOAL LOCATION
-goal = get(handles.txt_goal, 'String');
+goal = get(handles.txt_pp_goal, 'String');
 goal = regexp(goal, ',', 'split');
 goal = cellfun(@str2num,goal);
 
 % GET INITIAL POSITION
-start = get(handles.txt_start,'String');
+start = get(handles.txt_robot_pose,'String');
 start = regexp(start, ',', 'split');
 start = cellfun(@str2num,start);
 
 %fprintf('Click detected at x: %d, y: %d\n', x1, y1)
 %guidata(hObject,handles);  % commit target position to guidata
 
-path = RRT_star((handles.occ > handles.PARAMS.RRT_OCC_CONF), [start(1) start(2) start(3)], [goal(1) goal(2)], handles.PARAMS);
+path = RRT_star((handles.BinOcc > handles.PARAMS.RRT_OCC_CONF), [start(1) start(2) start(3)], [goal(1) goal(2)], handles.PARAMS);
 disp(path);
 handles.path = path;
 guidata(hObject, handles);
 
 plotPathOnOcc(handles, path);
 
-updateOccBinary(hObject, eventdata, handles);
-
 
 function plotPathOnOcc(handles, path)
 
-subplot(handles.axes_occ);
+subplot(handles.axes_occ_binary);
 hold on
 
 for ind = 1:size(path,2)-1
@@ -198,36 +182,18 @@ y = r*sin(t) + k;
 plot(x,y,color, 'LineWidth', 2);
 
 
-% --- Executes on button press in push_clear_path.
-function push_clear_path_Callback(hObject, eventdata, handles)
-% hObject    handle to push_clear_path (see GCBO)
+function txt_pp_goal_Callback(hObject, eventdata, handles)
+% hObject    handle to txt_pp_goal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.path = [];
-guidata(hObject, handles);
-
-subplot(handles.axes_occ);
-imagesc(handles.gr_x, handles.gr_y, (handles.occ > handles.PARAMS.RRT_OCC_CONF));
-set(gca,'YDir','normal')
-axis image
-
-updateOccBinary(hObject, eventdata, handles)
-
-
-
-function txt_goal_Callback(hObject, eventdata, handles)
-% hObject    handle to txt_goal (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of txt_goal as text
-%        str2double(get(hObject,'String')) returns contents of txt_goal as a double
+% Hints: get(hObject,'String') returns contents of txt_pp_goal as text
+%        str2double(get(hObject,'String')) returns contents of txt_pp_goal as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function txt_goal_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to txt_goal (see GCBO)
+function txt_pp_goal_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txt_pp_goal (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -243,9 +209,10 @@ function push_save_to_file_Callback(hObject, eventdata, handles)
 % hObject    handle to push_save_to_file (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+dlmwrite('pathplanner_occ_grid.txt',handles.BinOcc);
+dlmwrite('pathplanner_gr_x.txt',handles.gr_x);
+dlmwrite('pathplanner_gr_y.txt',handles.gr_y);
 dlmwrite('pathplanner_path.txt',handles.path);
-h = msgbox('Path saved to file.');
 
 
 % --- Executes on button press in push_load_from_file.
@@ -254,33 +221,24 @@ function push_load_from_file_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 start = dlmread('pathplanner_start.txt');
-goal = dlmread('pathplanner_goal.txt');
+% goal = dlmread('pathplanner_goal.txt');
 
-set(handles.txt_start, 'String', sprintf('%.2f,%.2f,%.2f', start(1), start(2), start(3)));
-set(handles.txt_goal, 'String', sprintf('%.2f,%.2f', goal(1), goal(2)));
+set(handles.txt_robot_pose, 'String', sprintf('%.2f,%.2f,%.2f', start(1), start(2), start(3)));
+% set(handles.txt_pp_goal, 'String', sprintf('%.2f,%.2f', goal(1), goal(2)));
 
 
-
-% --- Executes on button press in pushbutton5.
-function pushbutton5_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton5 (see GCBO)
+function txt_robot_pose_Callback(hObject, eventdata, handles)
+% hObject    handle to txt_robot_pose (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
-
-function txt_start_Callback(hObject, eventdata, handles)
-% hObject    handle to txt_start (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of txt_start as text
-%        str2double(get(hObject,'String')) returns contents of txt_start as a double
+% Hints: get(hObject,'String') returns contents of txt_robot_pose as text
+%        str2double(get(hObject,'String')) returns contents of txt_robot_pose as a double
 
 
 % --- Executes during object creation, after setting all properties.
-function txt_start_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to txt_start (see GCBO)
+function txt_robot_pose_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to txt_robot_pose (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -289,3 +247,264 @@ function txt_start_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% --- Callback for clicking on axes
+function axes_camera_ButtonDownFcn(hObject, eventdata, hfigure)
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+
+handles = guidata(hfigure);
+
+point = get(handles.axes_camera,'CurrentPoint');    % button down detected
+point = round(point(1,1:2)); 
+md = point(2);
+nd = point(1);
+
+[depth_m,depth_n] = size(handles.depth);
+
+[Dx,Dy] = privateRGBToWorld(md,nd,handles.n,handles.v,depth_m,depth_n,handles.Oax,handles.Xax,handles.Yax,handles.PARAMS);
+
+if (get(handles.toggle_click_circles,'Value') == 1)
+    fileID = fopen('circles.txt','a');
+    fprintf(fileID,'(%.2f,%.2f)\n', Dx, Dy);
+    fclose(fileID);
+    num_detected = str2double(get(handles.lbl_num_circles,'String'));
+    set(handles.lbl_num_circles,'String',num2str(num_detected+1));
+    return; 
+elseif (handles.reset_robot_xy)
+    handles.reset_robot_xy = false;
+    guidata(hObject,handles);
+    
+    pose = get(handles.txt_robot_pose,'String');
+    pose = pose(2:end-1);
+    pose = regexp(pose, ',', 'split');
+    
+    % pass new coordinates back to Simulink model
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%d,%d,%s]', Dx, Dy, pose{3}));
+  
+    % reset the pose integrator
+    curr_reset = str2double(get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value'));
+    if curr_reset == 1, set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','-1');
+    else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1'); end;
+    push_refresh_pose_Callback(hObject, eventdata, handles);
+    
+elseif handles.drawObsOnGrid && isempty(handles.draw_pt1)
+    handles.draw_pt1 = [point(1,1) point(1,2)];
+    guidata(hObject,handles);
+    
+    redrawOccBinary(hObject, eventdata, handles);
+    
+elseif handles.drawObsOnGrid && ~isempty(handles.draw_pt1)
+    % TODO: draw lines on the Occ grid. 
+    pt2 = [point(1,1) point(1,2)];
+    [handles.Occ,handles.Known,handles.gr_x,handles.gr_y] = drawOccWall( ...
+        handles.n,handles.v, handles.Oax,handles.Xax,handles.Yax,handles.rgb, ...
+        handles.gr_x,handles.gr_y, handles.Occ,handles.Known,handles.PARAMS, ...
+        1,handles.draw_pt1,pt2);
+
+    [handles.BinOcc] = getBinaryOccupancyGrid(handles.Occ,handles.Known);
+
+    handles.PARAMS.gr_x = handles.gr_x;
+    handles.PARAMS.gr_y = handles.gr_y;
+    handles.drawObsOnGrid = false;
+    handles.draw_pt1 = [];
+    guidata(hObject,handles);
+    
+    redrawOccBinary(hObject, eventdata, handles);
+else
+    
+    set(handles.txt_pp_goal,'String',sprintf('%.2f,%.2f',Dx, Dy));
+end
+
+
+% % --- Callback for clicking on axes
+function axes_occ_binary_ButtonDownFcn(hObject, eventdata, handles)
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+ 
+% Get default command line output from handles structure
+% point = get(handles.axes_occ_binary,'CurrentPoint');    % button down detected
+
+fprintf('TODO: remove obstacles.\n');
+
+
+function redrawOccBinary(hObject, eventdata, handles)
+% Helper function for ploting the selected plot type
+
+subplot(handles.axes_occ_binary);
+imagesc(handles.gr_x, handles.gr_y, (handles.BinOcc > handles.PARAMS.RRT_OCC_CONF));
+set(handles.axes_occ_binary,'YDir','normal')
+axis image
+set(handles.axes_occ_binary, 'ButtonDownFcn', {@axes_occ_binary_ButtonDownFcn, handles});
+set(findobj(gca,'type','image'),'hittest','off')
+
+
+function loadOccGrids(hObject, eventdata, handles)
+
+[X,Y,Z,ImInd] = getPointCloud(handles.depth,handles.PARAMS);
+[n,v] = getGroundPlane(X,Y,Z,handles.PARAMS);
+[Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,handles.depth,handles.rgb,handles.PARAMS);
+[X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax,handles.PARAMS);
+[Occ,Known,gr_x,gr_y] = getOccupancyGrid(X,Y,Z,handles.PARAMS);
+[BinOcc] = getBinaryOccupancyGrid(Occ,Known);
+[x,y,th,Im,In] = promptForRobotPosition(handles.rgb,n,v,Oax,Xax,Yax,handles.PARAMS);
+
+handles.Occ = Occ;
+handles.BinOcc = BinOcc;
+handles.Known = Known;
+handles.X = X;
+handles.Y = Y;
+handles.Z = Z;
+handles.ImInd = ImInd;
+handles.n = n;
+handles.v = v;
+handles.Oax = Oax;
+handles.Xax = Xax;
+handles.Yax = Yax;
+handles.gr_x = gr_x;
+handles.gr_y = gr_y;
+handles.PARAMS.gr_x = gr_x;
+handles.PARAMS.gr_y = gr_y;
+handles.x = x;
+handles.y = y;
+handles.th = th;
+handles.Im = Im;
+handles.In = In;
+
+axes(handles.axes_camera);
+camHandle = imshow(handles.rgb);
+set(camHandle, 'ButtonDownFcn', {@axes_camera_ButtonDownFcn, hObject});
+axis image;
+handles.camHandle = camHandle;
+
+guidata(hObject,handles);
+
+redrawOccBinary(hObject, eventdata, handles)
+
+
+function refreshKinect(hObject, eventdata, hfigure)
+handles = guidata(hfigure);
+if ~isempty(handles.context)
+    % update the Kinect image and update robot position.    
+    try
+        [handles.rgb, handles.depth] = privateKinectGrab(handles.context);
+        [handles.Im,handles.In,handles.x,handles.y,handles.th] = ...
+            privateUpdateRobotPosition(handles.Im,handles.In, ...
+            handles.x,handles.y,handles.th,handles.n,handles.v, ...
+            handles.Oax,handles.Xax,handles.Yax,handles.rgb,handles.PARAMS);
+        guidata(hfigure, handles);
+        updateCameraView(handles);
+    catch
+        fprintf('streaming caught exception. terminating.\n');
+        privateKinectStop(handles.context);
+    end
+end
+
+
+function updateCameraView(handles)
+set(handles.camHandle, 'CData',handles.rgb);
+
+
+% --- Executes on button press in push_pp_clear_path.
+function push_pp_clear_path_Callback(hObject, eventdata, handles)
+% hObject    handle to push_pp_clear_path (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.path = [];
+guidata(hObject, handles);
+redrawOccBinary(hObject, eventdata, handles)
+
+
+% --- Executes on key press with focus on fig_int_planner or any of its controls.
+function fig_int_planner_WindowKeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to fig_int_planner (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+if strcmp(eventdata.Key, 'd')
+    handles.drawObsOnGrid = true;
+    guidata(hObject,handles);
+end
+
+
+% --- Executes on button press in push_setrobotxy.
+function push_setrobotxy_Callback(hObject, eventdata, handles)
+% hObject    handle to push_setrobotxy (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.reset_robot_xy = true;
+guidata(hObject,handles);
+
+
+% --- Executes on button press in push_selfimplode.
+function push_selfimplode_Callback(hObject, eventdata, handles)
+% hObject    handle to push_selfimplode (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in toggle_click_circles.
+function toggle_click_circles_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_click_circles (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of toggle_click_circles
+if get(hObject,'Value') == 1
+    set(hObject,'String','Circle Location Logging: ON');
+    set(hObject,'ForegroundColor','red');
+else
+    set(hObject,'String','Circle Location Logging: OFF');
+    set(hObject,'ForegroundColor','black');
+end
+
+
+% --- Executes when user attempts to close fig_int_planner.
+function fig_int_planner_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to fig_int_planner (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: delete(hObject) closes the figure
+if ~isempty(handles.context)
+   privateKinectStop(handles.context);
+end
+
+if strcmp(get(handles.timer, 'Running'), 'on')
+    stop(handles.timer);
+    delete(handles.timer)
+end
+
+delete(hObject);
+
+
+% --- Executes on button press in toggle_stream_kinect.
+function toggle_stream_kinect_Callback(hObject, eventdata, handles)
+% hObject    handle to toggle_stream_kinect (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of toggle_stream_kinect
+
+handles.timer = timer(...
+    'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
+    'Period', 5, ...                    % Initial period is 1 sec.
+    'TimerFcn', {@refreshKinect,hObject}); % Specify callback
+
+guidata(hObject,handles);
+
+start(handles.timer);
+
+set(hObject, 'Enable', 'off');
