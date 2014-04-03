@@ -67,14 +67,18 @@ for pR = 1:Rn
 end
 new_m = double(min_Rc(2));
 new_n = double(min_Rc(1));
+
+bl_m = double(min_Bc(2));
+bl_n = double(min_Bc(1));
 % new_m = double(round((min_Rc(2) + min_Bc(2)) / 2) + PARAMS.ROBOT_HEIGHT_PX); % Correction factor since we are looking at the top of the robot...
 % new_n = double(round((min_Rc(1) + min_Bc(1)) / 2));
 
 [x,y] = privateRGBToWorld(new_m,new_n,n,v,size_m,size_n,Oax,Xax,Yax,PARAMS);
+[bl_x,bl_y] = privateRGBToWorld(bl_m,bl_n,n,v,size_m,size_n,Oax,Xax,Yax,PARAMS);
 
 % th = atan2( (y - old_y), (x - old_x) );
 
-th = atan2( min_Bc(2) - min_Rc(2), min_Bc(1) - min_Rc(1) );
+th = atan2( bl_y - y, bl_x - x );
 update = true;
 % 
 % imagesc(RR - RB)
