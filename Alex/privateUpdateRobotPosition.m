@@ -64,8 +64,8 @@ for pR = 1:Rn
         end
     end
 end
-new_m = min_Rc(2);
-new_n = min_Rc(1);
+new_m = double(min_Rc(2));
+new_n = double(min_Rc(1));
 % new_m = double(round((min_Rc(2) + min_Bc(2)) / 2) + PARAMS.ROBOT_HEIGHT_PX); % Correction factor since we are looking at the top of the robot...
 % new_n = double(round((min_Rc(1) + min_Bc(1)) / 2));
 

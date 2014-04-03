@@ -412,14 +412,14 @@ handles = guidata(hfigure);
 if ~isempty(handles.context)
     % update the Kinect image and update robot position.    
     try
-        tic;
+        fprintf('trying to grab\n');
         [handles.rgb, handles.depth] = privateKinectGrab(handles.context);
-        toc;
-        [~,~,handles.x,handles.y,handles.th] = ...
+        fprintf('grabbed. trying to update robot pos...\n');
+        [handles.Im,handles.In,handles.x,handles.y,handles.th] = ...
             privateUpdateRobotPosition(handles.Im,handles.In, ...
             handles.x,handles.y,handles.th,handles.n,handles.v, ...
             handles.Oax,handles.Xax,handles.Yax,handles.rgb,handles.PARAMS);
-
+        fprintf('[%.2f,%.2f,%.2f]\n',handles.x, handles.y, handles.th);
         % Update the file via the memory map.
         handles.sharedfile.Data(1) = 1;
         handles.sharedfile.Data(2:4) = [handles.x, handles.y, handles.th];
