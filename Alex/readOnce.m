@@ -28,31 +28,34 @@ end
 [~,v] = getGroundPlane(X,Y,Z,PARAMS);
 
 [Oax,Xax,Yax,~,~,~] = getWorldFrame(X,Y,Z,ImInd,n,v,depth,rgb,PARAMS);
-% [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax);
+[X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax,PARAMS);
 
-% [Dx,Dy] = getDiskCentres(n,v,rgb,depth,Oax,Xax,Yax,PARAMS)
-privateTestMeasure(n,v,rgb,depth,Oax,Xax,Yax,PARAMS);
+[depth_m,depth_n] = size(depth);
 
-% [X,Y,Z] = getWorldPointMap(X,Y,Z,n,Oax,Xax,Yax);
-% [Occ,Known,gr_x,gr_y] = getOccupancyGrid(X,Y,Z,PARAMS);
+% For testing
+hold on
+figure(2)
+k = 137;
+scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
+xlabel('X')
+ylabel('Y')
+zlabel('Z')
+axis equal
 
-% figure
-% subplot(1,3,1)
-% k = 137;
-% scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
-% xlabel('X')
-% ylabel('Y')
-% zlabel('Z')
-% axis equal
-% 
-% Grid = single(Occ)./single(Known);
-% Grid(isnan(Grid)) = -1;
-% subplot(1,3,2)
-% imagesc(gr_x,gr_y,Grid)
-% set(gca,'YDir','normal')
-% axis image
-% xlabel('X')
-% ylabel('Y')
-% 
-% subplot(1,3,3)
-% imshow(rgb)
+h = figure('units','normalized','outerposition',[0 0 1 1]);
+imshow(rgb)
+[x,y] = ginput(Inf);
+md = round(y);
+nd = round(x);
+
+[Dx,Dy] = privateRGBToWorld(md,nd,n,v,depth_m,depth_n,Oax,Xax,Yax,PARAMS);
+
+% For testing
+figure(2)
+hold on
+scatter(Dx,Dy,'red','*')
+
+dlmwrite('targets_2.txt',[Dx Dy])
+    
+
+close(h)

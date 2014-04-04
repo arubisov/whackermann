@@ -11,7 +11,7 @@ initParams;
 X2 = X;
 Y2 = Y;
 Z2 = Z;
-for i = 1:1, % Set to 20 when not using static frames
+for i = 1:20, % Set to 20 when not using static frames
     if i == 5, PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 23; end
     if i == 10, PARAMS.GROUND_PLANE_DECIMATION_FACTOR = 1; end % Improves results
 
