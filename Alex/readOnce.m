@@ -34,7 +34,7 @@ end
 
 % For testing
 hold on
-figure(2)
+h1 = figure;
 k = 137;
 scatter3(downsample(X,k),downsample(Y,k),downsample(Z,k),'.')
 xlabel('X')
@@ -42,20 +42,26 @@ ylabel('Y')
 zlabel('Z')
 axis equal
 
-h = figure('units','normalized','outerposition',[0 0 1 1]);
+h2 = figure('units','normalized','outerposition',[0 0 1 1]);
 imshow(rgb)
-[x,y] = ginput(Inf);
-md = round(y);
-nd = round(x);
+hold on;
+M_s = [];
+N_s = [];
+while true,
+    [x,y] = ginput(1);
+    if isempty(x), break; end
+    md = round(y);
+    nd = round(x);
+    M_s = [M_s; md]; %#ok<AGROW>
+    N_s = [N_s; nd]; %#ok<AGROW>
+    scatter(nd,md,'red','*')
+end
 
-[Dx,Dy] = privateRGBToWorld(md,nd,n,v,depth_m,depth_n,Oax,Xax,Yax,PARAMS);
+[Dx,Dy] = privateRGBToWorld(M_s,N_s,n,v,depth_m,depth_n,Oax,Xax,Yax,PARAMS);
 
 % For testing
-figure(2)
+figure(h1)
 hold on
 scatter(Dx,Dy,'red','*')
 
-dlmwrite('targets_2.txt',[Dx Dy])
-    
-
-close(h)
+dlmwrite('targets_2.txt',[Dx Dy],'newline','pc')
