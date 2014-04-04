@@ -18,7 +18,7 @@
   *   in the Simulink Coder User's Manual in the Chapter titled,
   *   "Wrapper S-functions".
   *
-  *   Created: Thu Apr  3 14:36:05 2014
+  *   Created: Fri Apr  4 12:34:54 2014
   */
 
 
@@ -209,17 +209,18 @@ if (exec_path[0] == 0 || xD[2] == 1) {
     }
 
     theta_err = theta - theta_path;
+    
     k = 100.0;
     
     /* flip the sign on the steering angle */
-//     new_steer_angle = - theta_err + atan(k * cte / drive_speed[0]);
-    new_steer_angle = phi + atan(k * cte / drive_speed[0]);
+    new_steer_angle = - theta_err + atan(k * cte / drive_speed[0]);
+    //new_steer_angle = phi + atan(k * cte / drive_speed[0]);
     
     if (new_steer_angle > 0) new_steer_angle = fmod(new_steer_angle + M_PI, 2.0*M_PI) - M_PI;
     else new_steer_angle = fmod(new_steer_angle - M_PI, 2.0*M_PI) + M_PI;
     
-    new_steer_angle = (new_steer_angle < -40) ? -40 : new_steer_angle;
-    new_steer_angle = (new_steer_angle > 40) ? 40 : new_steer_angle;
+    if (new_steer_angle < -0.6981) new_steer_angle = -0.6981;
+    if (new_steer_angle > 0.6981) new_steer_angle = 0.6981;
 
     steer_angle[0] = new_steer_angle;
 //     mexPrintf("PATH_FOL: vel=%.2f, steer=%.2f, cte=%.5f\n", drive_speed[0], steer_angle[0], cte);    
@@ -249,9 +250,6 @@ int    reached_path_end;  /* boolean: whether we've reached the path end */
 
 reached_path_end = xD[2];
 
-/* kill it here if we've finished the path. */
-if (reached_path_end == 1) return;
-
 if (exec_path[0] == 0) {
     /* reset internal states */
     xD[0] = 0;
@@ -259,6 +257,9 @@ if (exec_path[0] == 0) {
     xD[2] = 0;
     return;
 }
+
+/* kill it here if we've finished the path. */
+if (reached_path_end == 1) return;
 
 path_ind = xD[0];
 prev_dist_to = xD[1];

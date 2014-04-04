@@ -22,7 +22,7 @@ function varargout = interface(varargin)
 
 % Edit the above text to modify the response to help interface
 
-% Last Modified by GUIDE v2.5 03-Apr-2014 13:41:37
+% Last Modified by GUIDE v2.5 04-Apr-2014 11:52:04
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -88,7 +88,7 @@ handles.sharedfile = memmapfile(filename, 'Writable', true, 'Format', 'double');
 handles.timer = timer(...
     'ExecutionMode', 'fixedRate', ...   % Run timer repeatedly
     'Period', 0.25, ...                    % Initial period is 2 sec.
-    'TimerFcn', {@readRobotPoseFromMemMap,hObject}); % Specify callback
+    'TimerFcn', {@interfaceTimerUpdate,hObject}); % Specify callback
 
 guidata(hObject,handles);
 
@@ -413,7 +413,7 @@ function push_refresh_pose_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 %create a run time object that can return the value of the block's
 %output and then put the value in a string.
-rto = get_param('driver/Dead Reckoning/Bicycle Model/Discrete-Time Integrator','RuntimeObject');
+rto = get_param('driver/Dead Reckoning/Bicycle Model/Pose Integrator','RuntimeObject');
 pose = sprintf('[%.2f,%.2f,%.2f]',rto.OutputPort(1).Data(1), rto.OutputPort(1).Data(2), rto.OutputPort(1).Data(3));
 set(handles.txt_robot_pose,'String',pose);
 set(handles.txt_override_x, 'String', sprintf('%.2f',rto.OutputPort(1).Data(1)));
@@ -559,25 +559,26 @@ if strcmp(get(handles.timer, 'Running'), 'on')
 end
 
 
-function readRobotPoseFromMemMap(hObject, eventdata, hfigure)
+function interfaceTimerUpdate(hObject, eventdata, hfigure)
 handles = guidata(hfigure);
 
 push_check_black_circle_Callback(hObject, eventdata, handles);
+push_refresh_pose_Callback(hObject, eventdata, handles);
 
-% Wait until the first byte is not zero.
-if handles.sharedfile.Data(1) == 0, return; end;
+if get(handles.tog_stream_from_cam, 'Value')
+    % Wait until the first byte is not zero.
+    if handles.sharedfile.Data(1) == 0, return; end;
 
-% The first byte now contains the length of the message.
-% Get it from m.
-set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%f,%f,%f]', handles.sharedfile.Data(2), handles.sharedfile.Data(3), handles.sharedfile.Data(4)));
+    % The first byte now contains the length of the message.
+    % Get it from m.
+    set_param('driver/Dead Reckoning/Bicycle Model/robot_init_pose','Value',sprintf('[%f,%f,%f]', handles.sharedfile.Data(2), handles.sharedfile.Data(3), handles.sharedfile.Data(4)));
 
-curr_reset = str2double(get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value'));
-if curr_reset == 1, set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','-1');
-else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1'); end
+    curr_reset = str2double(get_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value'));
+    if curr_reset == 1, set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','-1');
+    else set_param('driver/Dead Reckoning/Bicycle Model/robot_pose_reset','Value','1'); end
 
-handles.sharedfile.Data(1:4) = zeros(1,4);
-
-fprintf('simulink pose updated.\n');
+    handles.sharedfile.Data(1:4) = zeros(1,4);
+end
 
 
 % --- Executes on button press in tog_stream_from_cam.
@@ -590,9 +591,25 @@ function tog_stream_from_cam_Callback(hObject, eventdata, handles)
 if get(hObject,'Value') == 1
     set(hObject,'String','Pose From Cam: ON');
     set(hObject,'ForegroundColor','red');
-    if strcmp(get(handles.timer, 'Running'), 'off'), start(handles.timer); end;
 else
     set(hObject,'String','Pose From Cam: OFF');
+    set(hObject,'ForegroundColor','black');
+end
+
+
+% --- Executes on button press in tog_start_updates.
+function tog_start_updates_Callback(hObject, eventdata, handles)
+% hObject    handle to tog_start_updates (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of tog_start_updates
+if get(hObject,'Value') == 1
+    set(hObject,'String','Updates: ON');
+    set(hObject,'ForegroundColor','red');
+    if strcmp(get(handles.timer, 'Running'), 'off'), start(handles.timer); end;
+else
+    set(hObject,'String','Updates: OFF');
     set(hObject,'ForegroundColor','black');
     if strcmp(get(handles.timer, 'Running'), 'on'), stop(handles.timer); end;
 end
