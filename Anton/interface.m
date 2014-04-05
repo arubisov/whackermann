@@ -327,13 +327,13 @@ if get(handles.toggle_manual_drive,'Value') == 1
    elseif strcmp(eventdata.Key, 'leftarrow')
        % turn left, ie increase motor position
        old_phi = str2double(get(handles.txt_steer_speed,'string'));
-       new_phi = max(min(old_phi+3, handles.PARAMS.MAX_STEER*180/pi), -handles.PARAMS.MAX_STEER*180/pi);
+       new_phi = max(min(old_phi+3, 35), -35);
        set(handles.txt_steer_speed,'string',num2str(new_phi));
        set_param('driver/Path Follower/steer_angle','Value',num2str(new_phi));
    elseif strcmp(eventdata.Key, 'rightarrow')
        % turn right, ie decrease motor position
        old_phi = str2double(get(handles.txt_steer_speed,'string'));
-       new_phi = max(min(old_phi-3, 2*handles.PARAMS.MAX_STEER*180/pi), -handles.PARAMS.MAX_STEER*180/pi);
+       new_phi = max(min(old_phi-3, 35), -35);
        set(handles.txt_steer_speed,'string',num2str(new_phi));
        set_param('driver/Path Follower/steer_angle','Value',num2str(new_phi));
    elseif strcmp(eventdata.Key, 'space')

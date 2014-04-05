@@ -3,7 +3,7 @@
 % load('trial_5.mat')
 % load('..\Anton\Save\20140318_1.mat')
 % load('..\Anton\Save\20140325_4.mat')
-load('run_1.mat')
+load('run_2.mat')
 context = [];
 
 % For old distorted data
